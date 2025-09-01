@@ -5,7 +5,7 @@ const moment = require("moment");
 const Stock = require("../models/stock");
 const User = require("../models/user");
 
-// ✅ Fetch user's trade history
+// --------------------- Fetch User Trade History ---------------------
 router.post("/find", async (req, res) => {
   try {
     const trades = await Stock.find({ user: req.body.id }).sort({ date: -1 });
@@ -16,7 +16,7 @@ router.post("/find", async (req, res) => {
   }
 });
 
-// ✅ Buy (place bet / purchase)
+// --------------------- Buy / Place Bet ---------------------
 router.post("/buy", authorize, async (req, res) => {
   const userId = req.user.id;
   const { quantity, price, ticker, data, value } = req.body;
@@ -39,14 +39,13 @@ router.post("/buy", authorize, async (req, res) => {
     // ⛔ Step 1: Deduct balance for placing the bet
     currentBalance -= betCost;
 
-    // ✅ Step 2: If won, credit winnings (2x payout)
-    let outcomeLog = `Placed bet on ${ticker} at $${price} for $${betCost} on ${moment().format("L")}.`;
+    // ✅ Step 2: Prepare outcome log in ₹
+    let outcomeLog = `Placed bet on ${ticker} at ₹${price} for ₹${betCost} on ${moment().format("L")}.`;
 
-    // Node 10 compatible checks
     if (data && data.outcome === "won") {
       const payout = betCost * 2;
       currentBalance += payout;
-      outcomeLog += ` ✅ WON: Credited $${payout}.`;
+      outcomeLog += ` ✅ WON: Credited ₹${payout}.`;
     } else if (data && data.outcome === "lost") {
       outcomeLog += ` ❌ LOST: Bet amount lost.`;
     } else if (data && data.outcome === "stopped") {
@@ -58,7 +57,7 @@ router.post("/buy", authorize, async (req, res) => {
     user.history.push(outcomeLog);
     await user.save();
 
-    // ✅ Step 4: Save stock/bet details
+    // ✅ Step 4: Save bet / stock details
     const stock = new Stock({
       stock: req.body.stock || "",
       ticker,
@@ -71,7 +70,7 @@ router.post("/buy", authorize, async (req, res) => {
 
     const saved = await stock.save();
 
-    // ✅ Step 5: Return updated balance and bet
+    // ✅ Step 5: Return updated balance and saved bet
     res.json({
       stock: saved,
       newBalance: user.balance
@@ -82,15 +81,17 @@ router.post("/buy", authorize, async (req, res) => {
   }
 });
 
-// ✅ Sell or delete stock
+// --------------------- Sell / Delete Stock ---------------------
 router.post("/delete", authorize, async (req, res) => {
   try {
     const user = await User.findById(req.body.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
     const sellValue = Number(req.body.price) * Number(req.body.quantity);
 
     user.balance += sellValue;
     user.history.push(
-      `Sold ${req.body.quantity} shares of ${req.body.ticker} at $${req.body.price} on ${moment().format("L")} for $${sellValue}.`
+      `Sold ${req.body.quantity} shares of ${req.body.ticker} at ₹${req.body.price} on ${moment().format("L")} for ₹${sellValue}.`
     );
     await user.save();
 
