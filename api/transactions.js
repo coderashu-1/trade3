@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const bcrypt = require("bcryptjs");
 const { authorize, authorizeAdmin } = require("../middleware/authorizeAdmin");
 
 // Multer setup for storing uploaded screenshots
@@ -246,5 +247,28 @@ router.post("/admin/update-qr", authorize, authorizeAdmin, qrUpload.single("qr")
     qrCodeUrl: "/static/qr.png",
   });
 });
+router.post("/admin/reset-password/:userId", authorize, authorizeAdmin, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters long" });
+    }
+
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    await user.save();
+
+    res.json({ message: `Password for ${user.email} has been reset successfully.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 module.exports = router;
+
