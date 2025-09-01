@@ -202,14 +202,7 @@ const LiveTradingWithChartMarkers = ({ auth, refreshUserData, buyStock }) => {
   const [strikePrice, setStrikePrice] = useState('');
 
   // active bet
-// active bets (up to 3), persist across refresh
-const [activeBets, setActiveBets] = useState(() => {
-  const saved = localStorage.getItem('activeBets');
-  return saved ? JSON.parse(saved) : [];
-});
-useEffect(() => {
-  localStorage.setItem('activeBets', JSON.stringify(activeBets));
-}, [activeBets]);
+  const [activeBet, setActiveBet] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef(null);
 
@@ -384,8 +377,7 @@ useEffect(() => {
 
   // beginBet: starts countdown and places entry marker
   const beginBet = useCallback((bet) => {
-    setActiveBets(prev => [...prev, bet]);
-(bet);
+    setActiveBet(bet);
     setTimeLeft(bet.duration);
 
     try {
@@ -447,7 +439,7 @@ useEffect(() => {
     } catch (err) {
       console.error('Error saving bet', err);
     } finally {
-      setActiveBets(prev => prev.filter(b => b.id !== bet.id));
+      setActiveBet(null);
       setTimeLeft(0);
       hasTriggeredRef.current = false;
       clearStrikeSubscription();
@@ -458,7 +450,7 @@ useEffect(() => {
 
   // startBet: immediate or strike-based start
   const startBet = useCallback(async (direction) => {
-    if (activeBets.length >= 3) return alert('Maximum 3 active bets allowed');
+    if (activeBet) return alert('A bet is already active');
     setActiveBet(null);
     setTimeLeft(0);
 
@@ -497,7 +489,7 @@ useEffect(() => {
     // immediate start (no strike)
     const current = getLatestPrice();
     if (!isFinite(current)) return alert('Current price unavailable');
-    const bet = { id: Date.now(), direction, amount: betAmount, entryPrice: current, duration: betDuration, strike: null };
+    const bet = { direction, amount: betAmount, entryPrice: current, duration: betDuration, strike: null };
     beginBet(bet);
   }, [activeBet, auth.user, betAmount, betDuration, beginBet, clearStrikeSubscription, getLatestPrice, selectedValue, strikePrice]);
 
@@ -536,13 +528,9 @@ useEffect(() => {
   };
 
   // Active bet P/L estimate (showing potential profit/loss based on current price but using binary payout semantics)
-  const activeBetsPnL = activeBets.map(bet => {
-  if (!isFinite(livePrice)) return 0;
-  return (( (livePrice > bet.entryPrice && bet.direction === 'up') || (livePrice < bet.entryPrice && bet.direction === 'down') )
-          ? bet.amount * PAYOUT_PCT
-          : -bet.amount);
-});
-
+  const activePnL = activeBet && isFinite(livePrice)
+    ? ( ( (livePrice > activeBet.entryPrice && activeBet.direction === 'up') || (livePrice < activeBet.entryPrice && activeBet.direction === 'down') ) ? (activeBet.amount * PAYOUT_PCT) : -activeBet.amount )
+    : 0;
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', color: '#fff' }}>
@@ -662,21 +650,17 @@ useEffect(() => {
                 </div>
               )}
 
-              {activeBets.map((bet, idx) => {
-              const pnl = activeBetsPnL[idx] || 0;
-              return (
-                <div key={bet.id} style={{ marginTop: 12, padding: 10, borderRadius: 8, background: '#111' }}>
+              {activeBet && (
+                <div style={{ marginTop: 12, padding: 10, borderRadius: 8, background: '#111' }}>
                   <div style={{ fontSize: 14, color: '#ccc' }}>Active Bet</div>
-                  <div style={{ fontWeight: 700 }}>{selectedValue} • {bet.direction.toUpperCase()}</div>
-                  <div>Entry: {fmtNum(bet.entryPrice)} • Amount: {fmtINR(bet.amount)}</div>
+                  <div style={{ fontWeight: 700 }}>{selectedValue} • {activeBet.direction.toUpperCase()}</div>
+                  <div>Entry: {fmtNum(activeBet.entryPrice)} • Amount: {fmtINR(activeBet.amount)}</div>
                   <div>Time left: {timeLeft}s</div>
                   <div style={{ marginTop: 6 }}>
-                    P/L (est): <b style={{ color: pnl > 0 ? '#0f0' : (pnl < 0 ? '#f33' : '#ccc') }}>{fmtINR(pnl)}</b>
+                    P/L (est): <b style={{ color: activePnL > 0 ? '#0f0' : (activePnL < 0 ? '#f33' : '#ccc') }}>{fmtINR(activePnL)}</b>
                   </div>
                 </div>
-              );
-            })}
-
+              )}
 
               <div style={{ marginTop: 12 }}>
                 <h6 style={{ color: '#ccc' }}>Bet History (Today)</h6>
@@ -736,6 +720,4 @@ LiveTradingWithChartMarkers.propTypes = { auth: PropTypes.object.isRequired, ref
 
 const mapStateToProps = (state) => ({ auth: state.auth, user: state.user });
 export default connect(mapStateToProps, { refreshUserData, buyStock })(LiveTradingWithChartMarkers);
-
-
 
