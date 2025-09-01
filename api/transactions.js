@@ -110,7 +110,7 @@ router.get("/admin/withdraws", authorize, authorizeAdmin, async (req, res) => {
   }
 });
 
-// ----- Approve Deposit -----
+// ----- Approve Deposit (delete screenshot after approval) -----
 router.post("/admin/deposit/approve/:id", authorize, authorizeAdmin, async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id);
@@ -123,9 +123,12 @@ router.post("/admin/deposit/approve/:id", authorize, authorizeAdmin, async (req,
     user.balance += transaction.amount;
     await user.save();
 
+    // Delete screenshot if exists
     if (transaction.screenshot) {
       const filePath = path.join(__dirname, "..", "uploads", transaction.screenshot);
-      fs.unlink(filePath, (err) => { if (err) console.error("Error deleting screenshot:", err); });
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting screenshot:", err);
+      });
     }
 
     res.json({ message: "Deposit approved and screenshot deleted", balance: user.balance });
@@ -153,9 +156,12 @@ router.post("/admin/withdraw/approve/:id", authorize, authorizeAdmin, async (req
     user.balance -= transaction.amount;
     await user.save();
 
+    // Delete screenshot if any (optional for withdraws)
     if (transaction.screenshot) {
       const filePath = path.join(__dirname, "..", "uploads", transaction.screenshot);
-      fs.unlink(filePath, (err) => { if (err) console.error("Error deleting screenshot:", err); });
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting screenshot:", err);
+      });
     }
 
     res.json({ message: "Withdraw approved", balance: user.balance });
@@ -165,7 +171,7 @@ router.post("/admin/withdraw/approve/:id", authorize, authorizeAdmin, async (req
   }
 });
 
-// ----- Delete Transaction -----
+// ----- Delete Transaction (also delete screenshot if exists) -----
 router.delete("/admin/transaction/:id", authorize, authorizeAdmin, async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id);
@@ -173,7 +179,9 @@ router.delete("/admin/transaction/:id", authorize, authorizeAdmin, async (req, r
 
     if (transaction.screenshot) {
       const filePath = path.join(__dirname, "..", "uploads", transaction.screenshot);
-      fs.unlink(filePath, (err) => { if (err) console.error("Error deleting screenshot:", err); });
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting screenshot:", err);
+      });
     }
 
     await transaction.remove();
@@ -223,28 +231,20 @@ router.delete("/admin/:id", authorize, authorizeAdmin, async (req, res) => {
   }
 });
 
-// ----- Admin: Update QR Code -----
+/ ----- Admin: Update QR Code -----/
 const qrStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(__dirname, "..", "static");
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
+  destination: (req, file, cb) => cb(null, "static/"),
   filename: (req, file, cb) => cb(null, "qr.png"),
 });
-const qrUpload = multer({ storage: qrStorage, limits: { fileSize: 2 * 1024 * 1024 } });
+const qrUpload = multer({ storage: qrStorage });
 
-router.post(
-  "/admin/update-qr",
-  authorize,
-  authorizeAdmin,
-  qrUpload.single("qr"),
-  (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded. Field name must be 'qr'" });
+router.post("/admin/update-qr", authorize, authorizeAdmin, qrUpload.single("qr"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const qrCodeUrl = "/static/qr.png";
-    return res.json({ message: "QR code updated successfully", qrCodeUrl });
-  }
-);
+  res.json({
+    message: "QR code updated successfully",
+    qrCodeUrl: "/static/qr.png",
+  });
+});
 
 module.exports = router;
