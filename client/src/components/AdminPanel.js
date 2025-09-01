@@ -181,7 +181,7 @@ const AdminPanel = ({
                             <td>
                               {tx.screenshot ? (
                                 <a
-                                  href={`$/uploads/${filename}?token=${localStorage.getItem("token")}`}
+                                  href={`/uploads/${filename}?token=${localStorage.getItem("token")}`}
                                   target="_blank"
                                   rel="noreferrer"
                                 >
@@ -398,6 +398,7 @@ export default connect(mapStateToProps, {
   deleteUser,
   updateQrCode,
 })(AdminPanel);
+
 
 
 
