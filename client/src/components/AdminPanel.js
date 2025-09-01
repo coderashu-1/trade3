@@ -177,7 +177,7 @@ const AdminPanel = ({
                         return (
                           <tr key={tx._id}>
                             <td>{tx.userId?.name || tx.userId?.email}</td>
-                            <td>${tx.amount.toFixed(2)}</td>
+                            <td>₹{tx.amount.toFixed(2)}</td>
                             <td>
                               {tx.screenshot ? (
                                 <a
@@ -222,7 +222,7 @@ const AdminPanel = ({
                       {paginate(filteredWithdraws)?.map(tx => (
                         <tr key={tx._id}>
                           <td>{tx.userId?.name || tx.userId?.email}</td>
-                          <td>${tx.amount.toFixed(2)}</td>
+                          <td>₹{tx.amount.toFixed(2)}</td>
                           <td>{tx.upiId ? `UPI: ${tx.upiId}` : `${tx.bankName} - ${tx.accountNumber} (${tx.ifscCode})`}</td>
                           <td><Button size="sm" variant="success" onClick={() => handleApproveClick(tx._id, "withdraw")}>Approve</Button></td>
                         </tr>
@@ -258,7 +258,7 @@ const AdminPanel = ({
                         <tr key={user._id}>
                           <td>{user.name}</td>
                           <td>{user.email}</td>
-                          <td>${user.balance.toFixed(2)}</td>
+                          <td>₹{user.balance.toFixed(2)}</td>
                           <td>{user.isAdmin ? "Yes" : "No"}</td>
                           <td>
                             <Button size="sm" style={{ marginRight: "0.5rem" }} variant="warning" className="me-2" onClick={() => handleUserAction(user._id, "toggleAdmin")}>
@@ -398,6 +398,7 @@ export default connect(mapStateToProps, {
   deleteUser,
   updateQrCode,
 })(AdminPanel);
+
 
 
 
