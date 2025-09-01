@@ -7,6 +7,7 @@ import {
   TOGGLE_ADMIN_STATUS,
   DELETE_USER,
   UPDATE_QR_CODE,
+  RESET_USER_PASSWORD, // ✅ new
 } from "../actions/adminActions";
 
 const initialState = {
@@ -14,6 +15,7 @@ const initialState = {
   withdraws: [],
   users: [],
   qrCodeUrl: "/static/qr.png", // ✅ default QR
+  resetPasswordMessage: null,  // ✅ store success message
 };
 
 export default function adminReducer(state = initialState, action) {
@@ -58,6 +60,13 @@ export default function adminReducer(state = initialState, action) {
         ...state,
         // ✅ Append timestamp so browser always fetches the fresh image
         qrCodeUrl: `${action.payload}?t=${Date.now()}`,
+      };
+
+    case RESET_USER_PASSWORD:
+      return {
+        ...state,
+        // ✅ store the message returned from API after password reset
+        resetPasswordMessage: action.payload.message,
       };
 
     default:
