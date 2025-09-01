@@ -9,7 +9,8 @@ export const APPROVE_WITHDRAW = "APPROVE_WITHDRAW";
 export const FETCH_ALL_USERS = "FETCH_ALL_USERS";
 export const TOGGLE_ADMIN_STATUS = "TOGGLE_ADMIN_STATUS";
 export const DELETE_USER = "DELETE_USER";
-export const UPDATE_QR_CODE = "UPDATE_QR_CODE"; // ✅ added
+export const UPDATE_QR_CODE = "UPDATE_QR_CODE"; 
+export const RESET_USER_PASSWORD = "RESET_USER_PASSWORD"; // ✅ new
 
 // ----- Transactions -----
 export const fetchPendingDeposits = () => async (dispatch, getState) => {
@@ -99,10 +100,9 @@ export const updateQrCode = (file) => async (dispatch, getState) => {
     const res = await axios.post("/api/transactions/admin/update-qr", formData, {
       headers: {
         "auth-token": getState().auth.token,
-        // ❌ Don't manually set Content-Type, let axios handle it
       },
       maxContentLength: Infinity,
-      maxBodyLength: Infinity, // ✅ prevents "Request entity too large" issues
+      maxBodyLength: Infinity,
     });
 
     dispatch({ type: UPDATE_QR_CODE, payload: res.data.qrCodeUrl });
@@ -112,4 +112,18 @@ export const updateQrCode = (file) => async (dispatch, getState) => {
   }
 };
 
+// ✅ Reset user password
+export const resetUserPassword = (userId, newPassword) => async (dispatch, getState) => {
+  try {
+    const res = await axios.post(
+      `/api/transactions/admin/reset-password/${userId}`,
+      { newPassword },
+      { headers: { "auth-token": getState().auth.token } }
+    );
 
+    dispatch({ type: RESET_USER_PASSWORD, payload: { userId, message: res.data.message } });
+  } catch (err) {
+    console.error("Password reset failed:", err);
+    dispatch(returnErrors(err.response?.data, err.response?.status));
+  }
+};
