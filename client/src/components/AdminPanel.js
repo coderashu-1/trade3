@@ -112,10 +112,11 @@ const AdminPanel = ({
     setResetPasswordModal({ show: true, userId, newPassword: "" });
   };
 
-  const handleResetPasswordChange = (e) => {
-    if (!e || !e.target) return;
-    setResetPasswordModal(prev => ({ ...prev, newPassword: e.target.value }));
-  };
+ const handleResetPasswordChange = (e) => {
+  const value = e?.currentTarget?.value || "";
+  setResetPasswordModal(prev => ({ ...prev, newPassword: value }));
+};
+
 
   const confirmResetPassword = () => {
     if (!resetPasswordModal.newPassword || resetPasswordModal.newPassword.length < 6) {
@@ -390,12 +391,13 @@ const AdminPanel = ({
           <Modal.Title>Reset User Password</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ background: "#2c3e50", color: "#fff" }}>
-          <Form.Control
+         <Form.Control
             type="password"
             placeholder="Enter new password"
             value={resetPasswordModal.newPassword || ""}
             onChange={handleResetPasswordChange}
           />
+
         </Modal.Body>
         <Modal.Footer style={{ background: "#2c3e50" }}>
           <Button variant="secondary" onClick={closeModals}>Cancel</Button>
@@ -446,3 +448,4 @@ export default connect(mapStateToProps, {
   updateQrCode,
   resetUserPassword, // ✅ new
 })(AdminPanel);
+
