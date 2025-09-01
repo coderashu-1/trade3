@@ -123,7 +123,7 @@ class StockHistory extends Component {
                 <Row className="mt-2 justify-content-center">
                   <p style={{ color: "rgb(33, 206, 153)" }}>
                     <strong>Current Balance:</strong>{" "}
-                    {user.balance?.toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                    {user.balance?.toLocaleString("en-IN", { style: "currency", currency: "INR" })}
                   </p>
                 </Row>
                 {/* <Row className="mt-2 mb-3 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Account created on:</strong> {this.formatCustomDate(user.date)}</p></Row> */}
