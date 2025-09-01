@@ -99,12 +99,17 @@ export const updateQrCode = (file) => async (dispatch, getState) => {
     const res = await axios.post("/api/transactions/admin/update-qr", formData, {
       headers: {
         "auth-token": getState().auth.token,
-        "Content-Type": "multipart/form-data",
+        // ❌ Don't manually set Content-Type, let axios handle it
       },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity, // ✅ prevents "Request entity too large" issues
     });
 
     dispatch({ type: UPDATE_QR_CODE, payload: res.data.qrCodeUrl });
   } catch (err) {
+    console.error("QR upload failed:", err);
     dispatch(returnErrors(err.response?.data, err.response?.status));
   }
 };
+
+
