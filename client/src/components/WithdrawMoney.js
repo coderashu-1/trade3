@@ -47,7 +47,6 @@ class WithdrawMoney extends Component {
           upiId: "",
         });
       } else if (transaction.error) {
-        // Display backend errors (including insufficient balance)
         this.setState({
           alertMessage: transaction.error,
           alertVariant: "danger",
@@ -64,13 +63,18 @@ class WithdrawMoney extends Component {
     if (!userId) return this.setState({ alertMessage: "User ID missing", alertVariant: "danger" });
     if (!amount) return this.setState({ alertMessage: "Amount is required", alertVariant: "danger" });
 
+    // Minimum withdrawal check
+    if (Number(amount) < 500) {
+      return this.setState({ alertMessage: "Minimum withdrawal amount is ₹500", alertVariant: "danger" });
+    }
+
     // Require either UPI or full bank details
     if ((!upiId || upiId.trim() === "") &&
         (!accountNumber || !bankName || !ifscCode || !accountHolderName)) {
       return this.setState({ alertMessage: "Provide either UPI ID or complete bank details", alertVariant: "danger" });
     }
 
-    // Optional: Check balance before sending request to backend
+    // Check if user has enough balance
     if (user.balance < parseFloat(amount)) {
       return this.setState({ alertMessage: "Insufficient balance", alertVariant: "danger" });
     }
@@ -81,6 +85,9 @@ class WithdrawMoney extends Component {
   render() {
     const { amount, accountNumber, bankName, ifscCode, accountHolderName, upiId, alertMessage, alertVariant } = this.state;
     const { transaction, user } = this.props;
+
+    const isAmountInvalid = Number(amount) < 500;
+    const isInsufficientBalance = user && parseFloat(amount) > user.balance;
 
     return (
       <>
@@ -113,16 +120,20 @@ class WithdrawMoney extends Component {
             <h3 className="mb-4 text-center">Withdraw Money</h3>
 
             <Form.Group controlId="formAmount">
-              <Form.Label>Amount to Withdraw (USD)</Form.Label>
+              <Form.Label>Amount to Withdraw (INR)</Form.Label>
               <Form.Control
                 type="number"
-                placeholder="e.g. 100"
+                placeholder="e.g. 500"
                 value={amount}
                 onChange={(e) => this.setState({ amount: e.target.value })}
                 min={1}
                 style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid rgb(33,206,153)" }}
               />
             </Form.Group>
+
+            {isAmountInvalid && (
+              <p className="text-warning text-center mt-2">Minimum withdrawal amount is ₹500</p>
+            )}
 
             {/* Optional UPI */}
             <Form.Group controlId="formUPI" className="mt-3">
@@ -186,12 +197,12 @@ class WithdrawMoney extends Component {
               style={{ backgroundColor: "rgb(33, 206, 153)", border: "none" }}
               className="w-100 mt-4"
               onClick={this.handleWithdrawRequest}
-              disabled={transaction.loading || (user && parseFloat(amount) > user.balance)}
+              disabled={transaction.loading || isInsufficientBalance || isAmountInvalid}
             >
               {transaction.loading ? <Spinner animation="border" size="sm" /> : "Submit Withdrawal Request"}
             </Button>
 
-            {user && parseFloat(amount) > user.balance && (
+            {isInsufficientBalance && (
               <p className="text-danger text-center mt-2">Insufficient balance</p>
             )}
           </Card>
