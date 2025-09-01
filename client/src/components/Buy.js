@@ -535,7 +535,7 @@ const LiveTradingWithChartMarkers = ({ auth, refreshUserData, buyStock }) => {
   return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', color: '#fff' }}>
       <NavBar />
-      <Container fluid className='py-4'>
+      <Container fluid className='py-4  mobile-padding-top'  >
         <Row>
           <Col md={4}>
             <div style={{ padding: 16, borderRadius: 10, background: 'linear-gradient(180deg,#171717,#0f0f0f)', border: '1px solid #ffc107' }}>
@@ -720,4 +720,5 @@ LiveTradingWithChartMarkers.propTypes = { auth: PropTypes.object.isRequired, ref
 
 const mapStateToProps = (state) => ({ auth: state.auth, user: state.user });
 export default connect(mapStateToProps, { refreshUserData, buyStock })(LiveTradingWithChartMarkers);
+
 
