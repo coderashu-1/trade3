@@ -29,7 +29,7 @@ class Home extends Component {
       <div className="home-page">
         <NavBar />
 
-        <Container fluid className="mt-4 mb-5">
+        <Container fluid className="mt-4 mb-5  mobile-padding-top">
           {/* Main Section: Chart Full Width */}
           <Row className="mb-4">
             <Col xs={12}>
@@ -79,3 +79,4 @@ const mapStateToProps = state => ({
 });
 
 export default connect(mapStateToProps)(Home);
+
