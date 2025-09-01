@@ -65,7 +65,7 @@ class AddMoney extends Component {
   render() {
     const { amount, screenshotPreview, alertMessage, alertVariant } = this.state;
     const { transaction } = this.props;
-    const qrCodeUrl = "http://localhost:5051/static/qr.png";
+    const qrCodeUrl = "https://trade2-tm7d.onrender.com/static/qr.png";
     return (
       <>
         <NavBar />
@@ -179,3 +179,4 @@ const mapStateToProps = (state) => ({
 });
 
 export default connect(mapStateToProps, { createDepositRequest, refreshUserData })(AddMoney);
+
