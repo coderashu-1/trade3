@@ -14,6 +14,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ✅ Ensure required folders exist
+const requiredDirs = ["uploads", "static"];
+requiredDirs.forEach((dir) => {
+  const fullPath = path.join(__dirname, dir);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+    console.log(`📂 Created missing folder: ${dir}`);
+  } else {
+    console.log(`📂 Folder already exists: ${dir}`);
+  }
+});
+
 // MongoDB Connection
 const db = process.env.mongoURI;
 mongoose
