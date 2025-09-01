@@ -112,23 +112,34 @@ class StockHistory extends Component {
         >
           {/* Account Info Tab */}
           <Tab eventKey="account" title={<span style={tabStyle("account")}>Account Info</span>}>
-            {user ? (
-              <>
-                <Row className="justify-content-center mt-3">
-                  <h3 style={{ color: "rgb(33, 206, 153)" }}>Account Information</h3>
-                </Row>
-                <Row className="mt-3 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Name:</strong> {user.name}</p></Row>
-                <Row className="mt-2 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Email:</strong> {user.email}</p></Row>
-                <Row className="mt-2 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Account ID:</strong> {user._id && user._id}</p></Row>
-                <Row className="mt-2 justify-content-center">
-                  <p style={{ color: "rgb(33, 206, 153)" }}>
-                    <strong>Current Balance:</strong>{" "}
-                    {user.balance?.toLocaleString("en-IN", { style: "currency", currency: "INR" })}
-                  </p>
-                </Row>
-              </>
-            ) : <Row className="justify-content-center"><p>Loading user information...</p></Row>}
-          </Tab>
+  {user ? (
+    <>
+      <Row className="justify-content-center mt-3">
+        <h3 style={{ color: "rgb(33, 206, 153)" }}>Account Information</h3>
+      </Row>
+      <Row className="mt-3 justify-content-center">
+        <p style={{ color: "rgb(33, 206, 153)" }}><strong>Name:</strong> {user.name}</p>
+      </Row>
+      <Row className="mt-2 justify-content-center">
+        <p style={{ color: "rgb(33, 206, 153)" }}><strong>Email:</strong> {user.email}</p>
+      </Row>
+      <Row className="mt-2 justify-content-center">
+        <p style={{ color: "rgb(33, 206, 153)" }}>
+          <strong>Account ID:</strong> {user._id || user.id || "Loading..."}
+        </p>
+      </Row>
+      <Row className="mt-2 justify-content-center">
+        <p style={{ color: "rgb(33, 206, 153)" }}>
+          <strong>Current Balance:</strong>{" "}
+          {user.balance?.toLocaleString("en-IN", { style: "currency", currency: "INR" })}
+        </p>
+      </Row>
+    </>
+  ) : (
+    <Row className="justify-content-center"><p>Loading user information...</p></Row>
+  )}
+</Tab>
+
 
           {/* History Tab */}
           <Tab eventKey="betting" title={<span style={tabStyle("betting")}>History</span>}>
@@ -307,4 +318,5 @@ const mapStateToProps = (state) => ({
 });
 
 export default connect(mapStateToProps, { refreshUserData })(StockHistory);
+
 
