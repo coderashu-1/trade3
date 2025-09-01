@@ -51,16 +51,24 @@ class AddMoney extends Component {
   }
 
   handleCreateRequest = () => {
-    const { user, createDepositRequest } = this.props;
-    const { amount, screenshot } = this.state;
+  const { user, createDepositRequest } = this.props;
+  const { amount, screenshot } = this.state;
 
-    const userId = user?._id || user?.id;
-    if (!userId) return alert("User ID missing");
-    if (!amount) return alert("Please enter deposit amount");
-    if (!screenshot) return alert("Please upload a payment screenshot");
+  const userId = user?._id || user?.id;
+  if (!userId) return alert("User ID missing");
 
-    createDepositRequest(userId, amount, screenshot);
-  };
+  if (!amount) return alert("Please enter deposit amount");
+
+  // Minimum deposit check
+  if (Number(amount) < 500) {
+    return alert("Minimum deposit amount is ₹500");
+  }
+
+  if (!screenshot) return alert("Please upload a payment screenshot");
+
+  createDepositRequest(userId, amount, screenshot);
+};
+
 
   render() {
     const { amount, screenshotPreview, alertMessage, alertVariant } = this.state;
@@ -179,6 +187,7 @@ const mapStateToProps = (state) => ({
 });
 
 export default connect(mapStateToProps, { createDepositRequest, refreshUserData })(AddMoney);
+
 
 
 
