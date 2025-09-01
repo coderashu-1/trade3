@@ -314,7 +314,7 @@ const AdminPanel = ({
         <p>Current QR Code:</p>
         {admin.qrCodeUrl ? (
           <img 
-            src={`ttps://trade3-production-f69d.up.railway.app${admin.qrCodeUrl}`} 
+            src={`https://trade3-production-f69d.up.railway.app${admin.qrCodeUrl}`} 
             alt="QR" 
             style={{ width: "200px" }} 
           />
@@ -398,6 +398,7 @@ export default connect(mapStateToProps, {
   deleteUser,
   updateQrCode,
 })(AdminPanel);
+
 
 
 
