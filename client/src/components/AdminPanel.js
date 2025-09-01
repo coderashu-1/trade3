@@ -10,6 +10,7 @@ import {
   toggleAdminStatus,
   deleteUser,
   updateQrCode,
+  resetUserPassword, // ✅ new action for reset password
 } from "../actions/adminActions";
 import PropTypes from "prop-types";
 import Footerv2 from "./Footerv2";
@@ -52,6 +53,7 @@ const AdminPanel = ({
   toggleAdminStatus,
   deleteUser,
   updateQrCode,
+  resetUserPassword,
 }) => {
   const [activeTab, setActiveTab] = useState("deposits");
   const [modal, setModal] = useState({ show: false, txId: null, type: "" });
@@ -61,14 +63,13 @@ const AdminPanel = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
 
-  // QR code state
+  // QR Code
   const [qrFile, setQrFile] = useState(null);
 
-  // Reset Password state
+  // ✅ Reset Password modal state
   const [resetPasswordModal, setResetPasswordModal] = useState({
     show: false,
     userId: null,
-    email: "",
     newPassword: "",
   });
 
@@ -78,8 +79,9 @@ const AdminPanel = ({
     fetchAllUsers();
   }, [fetchPendingDeposits, fetchPendingWithdraws, fetchAllUsers]);
 
-  // Approve deposits/withdrawals
+  // --- Deposit / Withdraw ---
   const handleApproveClick = (txId, type) => setModal({ show: true, txId, type });
+
   const confirmApprove = () => {
     if (modal.type === "deposit") {
       approveDeposit(modal.txId);
@@ -96,7 +98,7 @@ const AdminPanel = ({
     setModal({ show: false, txId: null, type: "" });
   };
 
-  // Users actions
+  // --- User actions ---
   const handleUserAction = (userId, action) => setConfirmUserModal({ show: true, userId, action });
   const confirmUserAction = () => {
     const { userId, action } = confirmUserModal;
@@ -105,53 +107,25 @@ const AdminPanel = ({
     setConfirmUserModal({ show: false, userId: null, action: "" });
   };
 
-  // Reset Password handlers
-  const handleResetPasswordClick = (userId, email) => {
-    setResetPasswordModal({ show: true, userId, email, newPassword: "" });
+  // --- Reset password ---
+  const openResetPasswordModal = (userId) => {
+    setResetPasswordModal({ show: true, userId, newPassword: "" });
   };
+
   const handleResetPasswordChange = (e) => {
+    if (!e || !e.target) return;
     setResetPasswordModal(prev => ({ ...prev, newPassword: e.target.value }));
   };
-  const confirmResetPassword = async () => {
-    const { userId, newPassword } = resetPasswordModal;
-    if (!newPassword || newPassword.length < 6) {
-      alert("Password must be at least 6 characters long");
-      return;
+
+  const confirmResetPassword = () => {
+    if (!resetPasswordModal.newPassword || resetPasswordModal.newPassword.length < 6) {
+      return setAlertModal({ show: true, message: "Password must be at least 6 characters long" });
     }
-
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/admin/reset-password/${userId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ newPassword }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message);
-      } else {
-        alert(data.error || "Failed to reset password");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Server error");
-    }
-
-    setResetPasswordModal({ show: false, userId: null, email: "", newPassword: "" });
+    resetUserPassword(resetPasswordModal.userId, resetPasswordModal.newPassword);
+    setResetPasswordModal({ show: false, userId: null, newPassword: "" });
   };
 
-  const closeModals = () => {
-    setModal({ show: false, txId: null, type: "" });
-    setConfirmUserModal({ show: false, userId: null, action: "" });
-    setAlertModal({ show: false, message: "" });
-    setResetPasswordModal({ show: false, userId: null, email: "", newPassword: "" });
-  };
-
-  // QR upload
+  // --- QR ---
   const handleQrChange = (e) => setQrFile(e.target.files[0]);
   const handleQrUpload = () => {
     if (!qrFile) return alert("Please select a QR code file");
@@ -159,15 +133,17 @@ const AdminPanel = ({
     setQrFile(null);
   };
 
-  // Filtering and pagination
+  // --- Filtering / Pagination ---
   const filteredDeposits = admin.deposits?.filter(tx =>
     tx.userId?.name?.toLowerCase().includes(search.toLowerCase()) ||
     tx.userId?.email?.toLowerCase().includes(search.toLowerCase())
   );
+
   const filteredWithdraws = admin.withdraws?.filter(tx =>
     tx.userId?.name?.toLowerCase().includes(search.toLowerCase()) ||
     tx.userId?.email?.toLowerCase().includes(search.toLowerCase())
   );
+
   const filteredUsers = users?.filter(user =>
     user?.name?.toLowerCase().includes(search.toLowerCase()) ||
     user?.email?.toLowerCase().includes(search.toLowerCase())
@@ -177,13 +153,47 @@ const AdminPanel = ({
     const start = (currentPage - 1) * itemsPerPage;
     return data.slice(start, start + itemsPerPage);
   };
+
   const totalPages = (data) => Math.ceil(data.length / itemsPerPage);
 
-  const sidebarStyle = { background: "#1f1f1f", borderRadius: "16px", padding: "1rem", minHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", boxShadow: "0 6px 15px rgba(0,0,0,0.4)" };
-  const tabStyle = (tab) => ({ width: "100%", padding: "0.75rem 1rem", borderRadius: "12px", marginBottom: "0.5rem", cursor: "pointer", background: activeTab === tab ? "linear-gradient(90deg, #0f2027, #203a43)" : "transparent", color: activeTab === tab ? "#fff" : "#ccc", fontWeight: "500", fontSize: "0.95rem", display: "flex", alignItems: "center", transition: "all 0.2s", boxShadow: activeTab === tab ? "0 4px 10px rgba(0,0,0,0.3)" : "none" });
+  const sidebarStyle = {
+    background: "#1f1f1f",
+    borderRadius: "16px",
+    padding: "1rem",
+    minHeight: "90vh",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    boxShadow: "0 6px 15px rgba(0,0,0,0.4)"
+  };
+
+  const tabStyle = (tab) => ({
+    width: "100%",
+    padding: "0.75rem 1rem",
+    borderRadius: "12px",
+    marginBottom: "0.5rem",
+    cursor: "pointer",
+    background: activeTab === tab ? "linear-gradient(90deg, #0f2027, #203a43)" : "transparent",
+    color: activeTab === tab ? "#fff" : "#ccc",
+    fontWeight: "500",
+    fontSize: "0.95rem",
+    display: "flex",
+    alignItems: "center",
+    transition: "all 0.2s",
+    boxShadow: activeTab === tab ? "0 4px 10px rgba(0,0,0,0.3)" : "none"
+  });
+
   const iconStyle = { marginRight: "10px", fontSize: "1.2rem" };
   const cardStyle = { background: "#2c3e50", color: "#fff", borderRadius: "12px", boxShadow: "0 6px 15px rgba(0,0,0,0.4)" };
+
   const getFilename = (path) => path.replace(/^uploads\//, "");
+
+  const closeModals = () => {
+    setModal({ show: false, txId: null, type: "" });
+    setConfirmUserModal({ show: false, userId: null, action: "" });
+    setAlertModal({ show: false, message: "" });
+    setResetPasswordModal({ show: false, userId: null, newPassword: "" });
+  };
 
   return (
     <>
@@ -200,10 +210,15 @@ const AdminPanel = ({
           </Col>
           <Col md={10}>
             <InputGroup className="mb-3">
-              <Form.Control placeholder="Search by name or email..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ backgroundColor: "#1f1f1f", color: "#fff", border: "1px solid #333" }} />
+              <Form.Control
+                placeholder="Search by name or email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ backgroundColor: "#1f1f1f", color: "#fff", border: "1px solid #333" }}
+              />
             </InputGroup>
 
-            {/* Deposits */}
+            {/* --- Deposits --- */}
             {activeTab === "deposits" && (
               <Card style={cardStyle} className="mb-4">
                 <Card.Body>
@@ -226,11 +241,7 @@ const AdminPanel = ({
                             <td>₹{tx.amount.toFixed(2)}</td>
                             <td>
                               {tx.screenshot ? (
-                                <a
-                                  href={`/uploads/${filename}?token=${localStorage.getItem("token")}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                >
+                                <a href={`/uploads/${filename}?token=${localStorage.getItem("token")}`} target="_blank" rel="noreferrer">
                                   View
                                 </a>
                               ) : "N/A"}
@@ -250,7 +261,7 @@ const AdminPanel = ({
               </Card>
             )}
 
-            {/* Withdraws */}
+            {/* --- Withdraws --- */}
             {activeTab === "withdraws" && (
               <Card style={cardStyle} className="mb-4">
                 <Card.Body>
@@ -284,7 +295,7 @@ const AdminPanel = ({
               </Card>
             )}
 
-            {/* Users */}
+            {/* --- Users --- */}
             {activeTab === "users" && (
               <Card style={cardStyle} className="mb-4">
                 <Card.Body>
@@ -307,13 +318,11 @@ const AdminPanel = ({
                           <td>₹{user.balance.toFixed(2)}</td>
                           <td>{user.isAdmin ? "Yes" : "No"}</td>
                           <td>
-                            <Button size="sm" style={{ marginRight: "0.5rem" }} variant="warning" onClick={() => handleUserAction(user._id, "toggleAdmin")}>
+                            <Button size="sm" style={{ marginRight: "0.5rem" }} variant="warning" className="me-2" onClick={() => handleUserAction(user._id, "toggleAdmin")}>
                               {user.isAdmin ? "Revoke Admin" : "Make Admin"}
                             </Button>
-                            <Button size="sm" style={{ marginRight: "0.5rem" }} variant="info" onClick={() => handleResetPasswordClick(user._id, user.email)}>
-                              Reset Password
-                            </Button>
-                            <Button size="sm" variant="danger" onClick={() => handleUserAction(user._id, "delete")}>Delete</Button>
+                            <Button size="sm" variant="danger" className="me-2" onClick={() => handleUserAction(user._id, "delete")}>Delete</Button>
+                            <Button size="sm" variant="primary" onClick={() => openResetPasswordModal(user._id)}>Reset Password</Button>
                           </td>
                         </tr>
                       ))}
@@ -328,7 +337,7 @@ const AdminPanel = ({
               </Card>
             )}
 
-            {/* QR Code Tab */}
+            {/* --- QR --- */}
             {activeTab === "qr" && (
               <Card style={cardStyle} className="mb-4">
                 <Card.Body>
@@ -340,11 +349,7 @@ const AdminPanel = ({
                   <Button className="mt-2" variant="primary" onClick={handleQrUpload} disabled={!qrFile}>Upload</Button>
                   <div className="mt-3">
                     <p>Current QR Code:</p>
-                    {admin.qrCodeUrl ? (
-                      <img src={`https://trade3-production-f69d.up.railway.app${admin.qrCodeUrl}`} alt="QR" style={{ width: "200px" }} />
-                    ) : (
-                      <p>No QR code uploaded yet.</p>
-                    )}
+                    {admin.qrCodeUrl ? <img src={`https://trade3-production-f69d.up.railway.app${admin.qrCodeUrl}`} alt="QR" style={{ width: "200px" }} /> : <p>No QR code uploaded yet.</p>}
                   </div>
                 </Card.Body>
               </Card>
@@ -354,7 +359,7 @@ const AdminPanel = ({
         <Footerv2 />
       </Container>
 
-      {/* Modals */}
+      {/* --- Modals --- */}
       <Modal show={modal.show} onHide={closeModals} centered>
         <Modal.Header style={{ background: "#2c3e50", color: "#fff" }} closeButton>
           <Modal.Title>Confirm Approval</Modal.Title>
@@ -379,6 +384,25 @@ const AdminPanel = ({
         </Modal.Footer>
       </Modal>
 
+      {/* --- Reset Password Modal --- */}
+      <Modal show={resetPasswordModal.show} onHide={closeModals} centered>
+        <Modal.Header style={{ background: "#2c3e50", color: "#fff" }} closeButton>
+          <Modal.Title>Reset User Password</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ background: "#2c3e50", color: "#fff" }}>
+          <Form.Control
+            type="password"
+            placeholder="Enter new password"
+            value={resetPasswordModal.newPassword || ""}
+            onChange={handleResetPasswordChange}
+          />
+        </Modal.Body>
+        <Modal.Footer style={{ background: "#2c3e50" }}>
+          <Button variant="secondary" onClick={closeModals}>Cancel</Button>
+          <Button variant="primary" onClick={confirmResetPassword}>Reset</Button>
+        </Modal.Footer>
+      </Modal>
+
       <Modal show={alertModal.show} onHide={() => setAlertModal({ show: false, message: "" })} centered>
         <Modal.Header style={{ background: "#2c3e50", color: "#fff" }} closeButton>
           <Modal.Title>Action Denied</Modal.Title>
@@ -386,28 +410,6 @@ const AdminPanel = ({
         <Modal.Body style={{ background: "#2c3e50", color: "#fff" }}>{alertModal.message}</Modal.Body>
         <Modal.Footer style={{ background: "#2c3e50" }}>
           <Button variant="primary" onClick={() => setAlertModal({ show: false, message: "" })}>OK</Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Reset Password Modal */}
-      <Modal show={resetPasswordModal.show} onHide={closeModals} centered>
-        <Modal.Header style={{ background: "#2c3e50", color: "#fff" }} closeButton>
-          <Modal.Title>Reset Password for {resetPasswordModal.email}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ background: "#2c3e50", color: "#fff" }}>
-          <Form.Group>
-            <Form.Label>New Password</Form.Label>
-            <Form.Control
-              type="password"
-              placeholder="Enter new password"
-              value={resetPasswordModal.newPassword}
-              onChange={handleResetPasswordChange}
-            />
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer style={{ background: "#2c3e50" }}>
-          <Button variant="secondary" onClick={closeModals}>Cancel</Button>
-          <Button variant="info" onClick={confirmResetPassword}>Reset Password</Button>
         </Modal.Footer>
       </Modal>
     </>
@@ -425,6 +427,7 @@ AdminPanel.propTypes = {
   toggleAdminStatus: PropTypes.func.isRequired,
   deleteUser: PropTypes.func.isRequired,
   updateQrCode: PropTypes.func.isRequired,
+  resetUserPassword: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
@@ -441,4 +444,5 @@ export default connect(mapStateToProps, {
   toggleAdminStatus,
   deleteUser,
   updateQrCode,
+  resetUserPassword, // ✅ new
 })(AdminPanel);
