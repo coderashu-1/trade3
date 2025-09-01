@@ -112,12 +112,13 @@ class NavBar extends Component {
           <div className="d-flex align-items-center">
             <Nav className="hide-on-mobile mr-4">
               <span className="bold-text text-primary">
-                {isAuthenticated && user?.balance !== undefined
-                  ? `Balance: ${Number(user.balance).toLocaleString("en-US", {
-                      style: "currency",
-                      currency: "USD"
-                    })}`
-                  : ""}
+              {isAuthenticated && user?.balance !== undefined
+  ? `Balance: ${Number(user.balance).toLocaleString("en-IN", {
+      style: "currency",
+      currency: "INR"
+    })}`
+  : ""}
+
               </span>
             </Nav>
 
