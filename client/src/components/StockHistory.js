@@ -310,3 +310,4 @@ const mapStateToProps = (state) => ({
 });
 
 export default connect(mapStateToProps, { refreshUserData })(StockHistory);
+
