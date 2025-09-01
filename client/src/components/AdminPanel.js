@@ -10,7 +10,6 @@ import {
   toggleAdminStatus,
   deleteUser,
   updateQrCode,
-  resetUserPassword, // ✅ added
 } from "../actions/adminActions";
 import PropTypes from "prop-types";
 import Footerv2 from "./Footerv2";
@@ -53,7 +52,6 @@ const AdminPanel = ({
   toggleAdminStatus,
   deleteUser,
   updateQrCode,
-  resetUserPassword, // ✅ added
 }) => {
   const [activeTab, setActiveTab] = useState("deposits");
   const [modal, setModal] = useState({ show: false, txId: null, type: "" });
@@ -63,8 +61,16 @@ const AdminPanel = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
 
-  // QR upload state
+  // QR code state
   const [qrFile, setQrFile] = useState(null);
+
+  // Reset Password state
+  const [resetPasswordModal, setResetPasswordModal] = useState({
+    show: false,
+    userId: null,
+    email: "",
+    newPassword: "",
+  });
 
   useEffect(() => {
     fetchPendingDeposits();
@@ -72,8 +78,8 @@ const AdminPanel = ({
     fetchAllUsers();
   }, [fetchPendingDeposits, fetchPendingWithdraws, fetchAllUsers]);
 
+  // Approve deposits/withdrawals
   const handleApproveClick = (txId, type) => setModal({ show: true, txId, type });
-
   const confirmApprove = () => {
     if (modal.type === "deposit") {
       approveDeposit(modal.txId);
@@ -90,23 +96,62 @@ const AdminPanel = ({
     setModal({ show: false, txId: null, type: "" });
   };
 
+  // Users actions
   const handleUserAction = (userId, action) => setConfirmUserModal({ show: true, userId, action });
-
   const confirmUserAction = () => {
     const { userId, action } = confirmUserModal;
     if (action === "toggleAdmin") toggleAdminStatus(userId);
     if (action === "delete") deleteUser(userId);
-    if (action === "resetPassword") resetUserPassword(userId); // ✅ Reset password logic
     setConfirmUserModal({ show: false, userId: null, action: "" });
+  };
+
+  // Reset Password handlers
+  const handleResetPasswordClick = (userId, email) => {
+    setResetPasswordModal({ show: true, userId, email, newPassword: "" });
+  };
+  const handleResetPasswordChange = (e) => {
+    setResetPasswordModal(prev => ({ ...prev, newPassword: e.target.value }));
+  };
+  const confirmResetPassword = async () => {
+    const { userId, newPassword } = resetPasswordModal;
+    if (!newPassword || newPassword.length < 6) {
+      alert("Password must be at least 6 characters long");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/admin/reset-password/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+      } else {
+        alert(data.error || "Failed to reset password");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    }
+
+    setResetPasswordModal({ show: false, userId: null, email: "", newPassword: "" });
   };
 
   const closeModals = () => {
     setModal({ show: false, txId: null, type: "" });
     setConfirmUserModal({ show: false, userId: null, action: "" });
     setAlertModal({ show: false, message: "" });
+    setResetPasswordModal({ show: false, userId: null, email: "", newPassword: "" });
   };
 
-  // QR update handlers
+  // QR upload
   const handleQrChange = (e) => setQrFile(e.target.files[0]);
   const handleQrUpload = () => {
     if (!qrFile) return alert("Please select a QR code file");
@@ -138,7 +183,6 @@ const AdminPanel = ({
   const tabStyle = (tab) => ({ width: "100%", padding: "0.75rem 1rem", borderRadius: "12px", marginBottom: "0.5rem", cursor: "pointer", background: activeTab === tab ? "linear-gradient(90deg, #0f2027, #203a43)" : "transparent", color: activeTab === tab ? "#fff" : "#ccc", fontWeight: "500", fontSize: "0.95rem", display: "flex", alignItems: "center", transition: "all 0.2s", boxShadow: activeTab === tab ? "0 4px 10px rgba(0,0,0,0.3)" : "none" });
   const iconStyle = { marginRight: "10px", fontSize: "1.2rem" };
   const cardStyle = { background: "#2c3e50", color: "#fff", borderRadius: "12px", boxShadow: "0 6px 15px rgba(0,0,0,0.4)" };
-
   const getFilename = (path) => path.replace(/^uploads\//, "");
 
   return (
@@ -180,7 +224,17 @@ const AdminPanel = ({
                           <tr key={tx._id}>
                             <td>{tx.userId?.name || tx.userId?.email}</td>
                             <td>₹{tx.amount.toFixed(2)}</td>
-                            <td>{tx.screenshot ? <a href={`/uploads/${filename}?token=${localStorage.getItem("token")}`} target="_blank" rel="noreferrer">View</a> : "N/A"}</td>
+                            <td>
+                              {tx.screenshot ? (
+                                <a
+                                  href={`/uploads/${filename}?token=${localStorage.getItem("token")}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  View
+                                </a>
+                              ) : "N/A"}
+                            </td>
                             <td><Button size="sm" variant="success" onClick={() => handleApproveClick(tx._id, "deposit")}>Approve</Button></td>
                           </tr>
                         );
@@ -256,8 +310,10 @@ const AdminPanel = ({
                             <Button size="sm" style={{ marginRight: "0.5rem" }} variant="warning" onClick={() => handleUserAction(user._id, "toggleAdmin")}>
                               {user.isAdmin ? "Revoke Admin" : "Make Admin"}
                             </Button>
-                            <Button size="sm" style={{ marginRight: "0.5rem" }} variant="danger" onClick={() => handleUserAction(user._id, "delete")}>Delete</Button>
-                            <Button size="sm" variant="info" onClick={() => handleUserAction(user._id, "resetPassword")}>Reset Password</Button> {/* ✅ Reset Password */}
+                            <Button size="sm" style={{ marginRight: "0.5rem" }} variant="info" onClick={() => handleResetPasswordClick(user._id, user.email)}>
+                              Reset Password
+                            </Button>
+                            <Button size="sm" variant="danger" onClick={() => handleUserAction(user._id, "delete")}>Delete</Button>
                           </td>
                         </tr>
                       ))}
@@ -272,7 +328,7 @@ const AdminPanel = ({
               </Card>
             )}
 
-            {/* QR Tab */}
+            {/* QR Code Tab */}
             {activeTab === "qr" && (
               <Card style={cardStyle} className="mb-4">
                 <Card.Body>
@@ -284,12 +340,15 @@ const AdminPanel = ({
                   <Button className="mt-2" variant="primary" onClick={handleQrUpload} disabled={!qrFile}>Upload</Button>
                   <div className="mt-3">
                     <p>Current QR Code:</p>
-                    {admin.qrCodeUrl ? <img src={`https://trade3-production-f69d.up.railway.app${admin.qrCodeUrl}`} alt="QR" style={{ width: "200px" }} /> : <p>No QR code uploaded yet.</p>}
+                    {admin.qrCodeUrl ? (
+                      <img src={`https://trade3-production-f69d.up.railway.app${admin.qrCodeUrl}`} alt="QR" style={{ width: "200px" }} />
+                    ) : (
+                      <p>No QR code uploaded yet.</p>
+                    )}
                   </div>
                 </Card.Body>
               </Card>
             )}
-
           </Col>
         </Row>
         <Footerv2 />
@@ -312,7 +371,7 @@ const AdminPanel = ({
           <Modal.Title>Confirm Action</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ background: "#2c3e50", color: "#fff" }}>
-          Are you sure you want to {confirmUserModal.action === "delete" ? "delete this user" : confirmUserModal.action === "resetPassword" ? "reset this user's password" : "toggle admin status"}?
+          Are you sure you want to {confirmUserModal.action === "delete" ? "delete this user" : "toggle admin status"}?
         </Modal.Body>
         <Modal.Footer style={{ background: "#2c3e50" }}>
           <Button variant="secondary" onClick={closeModals}>Cancel</Button>
@@ -327,6 +386,28 @@ const AdminPanel = ({
         <Modal.Body style={{ background: "#2c3e50", color: "#fff" }}>{alertModal.message}</Modal.Body>
         <Modal.Footer style={{ background: "#2c3e50" }}>
           <Button variant="primary" onClick={() => setAlertModal({ show: false, message: "" })}>OK</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Reset Password Modal */}
+      <Modal show={resetPasswordModal.show} onHide={closeModals} centered>
+        <Modal.Header style={{ background: "#2c3e50", color: "#fff" }} closeButton>
+          <Modal.Title>Reset Password for {resetPasswordModal.email}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ background: "#2c3e50", color: "#fff" }}>
+          <Form.Group>
+            <Form.Label>New Password</Form.Label>
+            <Form.Control
+              type="password"
+              placeholder="Enter new password"
+              value={resetPasswordModal.newPassword}
+              onChange={handleResetPasswordChange}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer style={{ background: "#2c3e50" }}>
+          <Button variant="secondary" onClick={closeModals}>Cancel</Button>
+          <Button variant="info" onClick={confirmResetPassword}>Reset Password</Button>
         </Modal.Footer>
       </Modal>
     </>
@@ -344,7 +425,6 @@ AdminPanel.propTypes = {
   toggleAdminStatus: PropTypes.func.isRequired,
   deleteUser: PropTypes.func.isRequired,
   updateQrCode: PropTypes.func.isRequired,
-  resetUserPassword: PropTypes.func.isRequired, // ✅ added
 };
 
 const mapStateToProps = (state) => ({
@@ -361,5 +441,4 @@ export default connect(mapStateToProps, {
   toggleAdminStatus,
   deleteUser,
   updateQrCode,
-  resetUserPassword, // ✅ added
 })(AdminPanel);
