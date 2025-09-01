@@ -110,7 +110,7 @@ router.get("/admin/withdraws", authorize, authorizeAdmin, async (req, res) => {
   }
 });
 
-// ----- Approve Deposit (delete screenshot after approval) -----
+// ----- Approve Deposit -----
 router.post("/admin/deposit/approve/:id", authorize, authorizeAdmin, async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id);
@@ -123,12 +123,9 @@ router.post("/admin/deposit/approve/:id", authorize, authorizeAdmin, async (req,
     user.balance += transaction.amount;
     await user.save();
 
-    // Delete screenshot if exists
     if (transaction.screenshot) {
       const filePath = path.join(__dirname, "..", "uploads", transaction.screenshot);
-      fs.unlink(filePath, (err) => {
-        if (err) console.error("Error deleting screenshot:", err);
-      });
+      fs.unlink(filePath, (err) => { if (err) console.error("Error deleting screenshot:", err); });
     }
 
     res.json({ message: "Deposit approved and screenshot deleted", balance: user.balance });
@@ -156,12 +153,9 @@ router.post("/admin/withdraw/approve/:id", authorize, authorizeAdmin, async (req
     user.balance -= transaction.amount;
     await user.save();
 
-    // Delete screenshot if any (optional for withdraws)
     if (transaction.screenshot) {
       const filePath = path.join(__dirname, "..", "uploads", transaction.screenshot);
-      fs.unlink(filePath, (err) => {
-        if (err) console.error("Error deleting screenshot:", err);
-      });
+      fs.unlink(filePath, (err) => { if (err) console.error("Error deleting screenshot:", err); });
     }
 
     res.json({ message: "Withdraw approved", balance: user.balance });
@@ -171,7 +165,7 @@ router.post("/admin/withdraw/approve/:id", authorize, authorizeAdmin, async (req
   }
 });
 
-// ----- Delete Transaction (also delete screenshot if exists) -----
+// ----- Delete Transaction -----
 router.delete("/admin/transaction/:id", authorize, authorizeAdmin, async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id);
@@ -179,9 +173,7 @@ router.delete("/admin/transaction/:id", authorize, authorizeAdmin, async (req, r
 
     if (transaction.screenshot) {
       const filePath = path.join(__dirname, "..", "uploads", transaction.screenshot);
-      fs.unlink(filePath, (err) => {
-        if (err) console.error("Error deleting screenshot:", err);
-      });
+      fs.unlink(filePath, (err) => { if (err) console.error("Error deleting screenshot:", err); });
     }
 
     await transaction.remove();
@@ -235,15 +227,12 @@ router.delete("/admin/:id", authorize, authorizeAdmin, async (req, res) => {
 const qrStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = path.join(__dirname, "..", "static");
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log("📂 Created static folder for QR code");
-    }
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename: (req, file, cb) => cb(null, "qr.png"),
 });
-const qrUpload = multer({ storage: qrStorage });
+const qrUpload = multer({ storage: qrStorage, limits: { fileSize: 2 * 1024 * 1024 } });
 
 router.post(
   "/admin/update-qr",
@@ -251,28 +240,11 @@ router.post(
   authorizeAdmin,
   qrUpload.single("qr"),
   (req, res) => {
-    console.log("🔎 Reached /admin/update-qr");
-    console.log("Headers:", req.headers);
-    console.log("Body:", req.body);
-    console.log("File received:", req.file);
-
-    if (!req.file) {
-      console.error("❌ No file uploaded!");
-      return res
-        .status(400)
-        .json({ error: "No file uploaded. Field name must be 'qr'" });
-    }
+    if (!req.file) return res.status(400).json({ error: "No file uploaded. Field name must be 'qr'" });
 
     const qrCodeUrl = "/static/qr.png";
-    console.log("✅ QR code saved:", qrCodeUrl);
-
-    return res.json({
-      message: "QR code updated successfully",
-      qrCodeUrl,
-    });
+    return res.json({ message: "QR code updated successfully", qrCodeUrl });
   }
 );
 
-
 module.exports = router;
-
