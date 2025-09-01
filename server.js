@@ -6,37 +6,28 @@ const cors = require("cors");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
 
-const { authorizeAdmin } = require("./middleware/authorizeAdmin");
+const { authorizeAdmin } = require("./middleware/authorizeAdmin"); // ✅ your existing middleware
 
 const app = express();
 
-// ✅ Increase payload limits for file uploads
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+// Middleware
 app.use(cors());
+app.use(express.json());
 
-// ✅ Ensure required folders exist
-const requiredDirs = ["uploads", "static"];
-requiredDirs.forEach((dir) => {
-  const fullPath = path.join(__dirname, dir);
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true });
-    console.log(`📂 Created missing folder: ${dir}`);
-  } else {
-    console.log(`📂 Folder already exists: ${dir}`);
-  }
-});
-
-// MongoDB connection
+// MongoDB Connection
+const db = process.env.mongoURI;
 mongoose
-  .connect(process.env.mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(db, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err.message);
     process.exit(1);
   });
 
-// API routes
+// API Routes
 app.use("/api/user", require("./api/user"));
 app.use("/api/stocks", require("./api/stocks"));
 app.use("/api/authorize", require("./api/authorize"));
@@ -44,10 +35,7 @@ app.use("/api/iex", require("./api/iex"));
 app.use("/api/email", require("./api/email"));
 app.use("/api/transactions", require("./api/transactions"));
 
-// ✅ Serve static files
-app.use("/static", express.static(path.join(__dirname, "static")));
-
-// ✅ Admin-only file access (uploads)
+// ✅ Middleware to protect file access via token query
 function authorizeAdminFile(req, res, next) {
   const token = req.query.token;
   if (!token) return res.status(401).json({ msg: "No token. Authorization denied." });
@@ -62,8 +50,12 @@ function authorizeAdminFile(req, res, next) {
   }
 }
 
+app.use("/static", express.static(path.join(__dirname, "static")));
+
+// ✅ Protected route for deposit screenshots (admins only)
 app.get("/uploads/:filename", authorizeAdminFile, (req, res) => {
   const filePath = path.join(__dirname, "uploads", req.params.filename);
+
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (err) return res.status(404).json({ msg: "File not found" });
     res.sendFile(filePath);
@@ -73,6 +65,8 @@ app.get("/uploads/:filename", authorizeAdminFile, (req, res) => {
 // Serve React frontend in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "client", "build")));
+
+  // Handle SPA routing
   app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
   });
