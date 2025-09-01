@@ -231,21 +231,48 @@ router.delete("/admin/:id", authorize, authorizeAdmin, async (req, res) => {
   }
 });
 
-/ ----- Admin: Update QR Code -----/
-
+// ----- Admin: Update QR Code -----
 const qrStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "static/"),
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, "..", "static");
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      console.log("📂 Created static folder for QR code");
+    }
+    cb(null, dir);
+  },
   filename: (req, file, cb) => cb(null, "qr.png"),
 });
 const qrUpload = multer({ storage: qrStorage });
 
-router.post("/admin/update-qr", authorize, authorizeAdmin, qrUpload.single("qr"), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+router.post(
+  "/admin/update-qr",
+  authorize,
+  authorizeAdmin,
+  qrUpload.single("qr"),
+  (req, res) => {
+    console.log("🔎 Reached /admin/update-qr");
+    console.log("Headers:", req.headers);
+    console.log("Body:", req.body);
+    console.log("File received:", req.file);
 
-  res.json({
-    message: "QR code updated successfully",
-    qrCodeUrl: "/static/qr.png",
-  });
-});
+    if (!req.file) {
+      console.error("❌ No file uploaded!");
+      return res
+        .status(400)
+        .json({ error: "No file uploaded. Field name must be 'qr'" });
+    }
+
+    const qrCodeUrl = "/static/qr.png";
+    console.log("✅ QR code saved:", qrCodeUrl);
+
+    return res.json({
+      message: "QR code updated successfully",
+      qrCodeUrl,
+    });
+  }
+);
+
 
 module.exports = router;
+
