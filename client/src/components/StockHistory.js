@@ -126,7 +126,7 @@ class StockHistory extends Component {
                     {user.balance?.toLocaleString("en-US", { style: "currency", currency: "USD" })}
                   </p>
                 </Row>
-                <Row className="mt-2 mb-3 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Account created on:</strong> {this.formatCustomDate(user.date)}</p></Row>
+                {/* <Row className="mt-2 mb-3 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Account created on:</strong> {this.formatCustomDate(user.date)}</p></Row> */}
               </>
             ) : <Row className="justify-content-center"><p>Loading user information...</p></Row>}
           </Tab>
@@ -248,6 +248,56 @@ class StockHistory extends Component {
               </Col>
             </Row>
           </Tab>
+
+          <Tab eventKey="help" title={<span style={tabStyle("help")}>Help Center</span>}>
+  <Row className="justify-content-center mt-3">
+    <Col xs={12} lg={8}>
+      <h3 className="text-center mb-4" style={{ color: "rgb(33, 206, 153)" }}>Help Center</h3>
+      <div style={{
+        color: "#fff",
+        border: "1px solid rgba(33, 206, 153, 0.5)",
+        borderRadius: "12px",
+        padding: "20px",
+        backgroundColor: "#2a2a2a",
+        textAlign: "center",
+        lineHeight: "1.8",
+      }}>
+        <p>We are here to assist you anytime! Reach out to us through any of the options below:</p>
+
+        <p>
+          <strong>WhatsApp Support:</strong><br />
+          <a href="https://wa.me/1234567890" target="_blank" rel="noreferrer">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" 
+              alt="WhatsApp" 
+              style={{ width: "40px", height: "40px", cursor: "pointer" }} 
+            />
+          </a>
+        </p>
+
+        <p>
+          <strong>Email:</strong><br />
+          <a href="mailto:support@example.com" style={{ color: "#21ce99" }}>
+            support@example.com
+          </a>
+        </p>
+
+        <p>
+          <strong>Phone:</strong><br />
+          +1 234 567 890
+        </p>
+
+        <p>
+          <strong>Other Help Info:</strong><br />
+          You can message us anytime for account support, transaction help, or general queries. Our support team is happy to assist you promptly.
+        </p>
+
+        <p>Feel free to reach out—we are always here to help! 😊</p>
+      </div>
+    </Col>
+  </Row>
+</Tab>
+
 
         </Tabs>
       </Container>
