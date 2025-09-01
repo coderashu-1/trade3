@@ -111,7 +111,7 @@ class AddMoney extends Component {
 
             {/* Amount Input */}
             <Form.Group controlId="formAmount">
-              <Form.Label>Enter Amount (USD)</Form.Label>
+              <Form.Label>Enter Amount (INR)</Form.Label>
               <Form.Control
                 type="number"
                 placeholder="e.g. 100"
@@ -179,6 +179,7 @@ const mapStateToProps = (state) => ({
 });
 
 export default connect(mapStateToProps, { createDepositRequest, refreshUserData })(AddMoney);
+
 
 
 
