@@ -103,7 +103,7 @@ class StockHistory extends Component {
     const withdraws = user?.transactions?.filter(tx => tx.type === "withdraw") || [];
 
     return (
-      <Container className="mt-4">
+      <Container className="mt-4  mobile-padding-top">
         <Tabs
           id="account-betting-tabs"
           activeKey={activeTab}
@@ -318,5 +318,6 @@ const mapStateToProps = (state) => ({
 });
 
 export default connect(mapStateToProps, { refreshUserData })(StockHistory);
+
 
 
