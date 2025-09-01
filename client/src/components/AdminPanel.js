@@ -9,7 +9,8 @@ import {
   fetchAllUsers,
   toggleAdminStatus,
   deleteUser,
-  updateQrCode, // ✅ new
+  updateQrCode,
+  resetUserPassword, // ✅ added
 } from "../actions/adminActions";
 import PropTypes from "prop-types";
 import Footerv2 from "./Footerv2";
@@ -52,6 +53,7 @@ const AdminPanel = ({
   toggleAdminStatus,
   deleteUser,
   updateQrCode,
+  resetUserPassword, // ✅ added
 }) => {
   const [activeTab, setActiveTab] = useState("deposits");
   const [modal, setModal] = useState({ show: false, txId: null, type: "" });
@@ -61,7 +63,7 @@ const AdminPanel = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
 
-  // ✅ QR upload state
+  // QR upload state
   const [qrFile, setQrFile] = useState(null);
 
   useEffect(() => {
@@ -94,6 +96,7 @@ const AdminPanel = ({
     const { userId, action } = confirmUserModal;
     if (action === "toggleAdmin") toggleAdminStatus(userId);
     if (action === "delete") deleteUser(userId);
+    if (action === "resetPassword") resetUserPassword(userId); // ✅ Reset password logic
     setConfirmUserModal({ show: false, userId: null, action: "" });
   };
 
@@ -103,7 +106,7 @@ const AdminPanel = ({
     setAlertModal({ show: false, message: "" });
   };
 
-  // ✅ QR update handlers
+  // QR update handlers
   const handleQrChange = (e) => setQrFile(e.target.files[0]);
   const handleQrUpload = () => {
     if (!qrFile) return alert("Please select a QR code file");
@@ -136,7 +139,6 @@ const AdminPanel = ({
   const iconStyle = { marginRight: "10px", fontSize: "1.2rem" };
   const cardStyle = { background: "#2c3e50", color: "#fff", borderRadius: "12px", boxShadow: "0 6px 15px rgba(0,0,0,0.4)" };
 
-  // Helper to get only filename from db path
   const getFilename = (path) => path.replace(/^uploads\//, "");
 
   return (
@@ -178,17 +180,7 @@ const AdminPanel = ({
                           <tr key={tx._id}>
                             <td>{tx.userId?.name || tx.userId?.email}</td>
                             <td>₹{tx.amount.toFixed(2)}</td>
-                            <td>
-                              {tx.screenshot ? (
-                                <a
-                                  href={`/uploads/${filename}?token=${localStorage.getItem("token")}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                >
-                                  View
-                                </a>
-                              ) : "N/A"}
-                            </td>
+                            <td>{tx.screenshot ? <a href={`/uploads/${filename}?token=${localStorage.getItem("token")}`} target="_blank" rel="noreferrer">View</a> : "N/A"}</td>
                             <td><Button size="sm" variant="success" onClick={() => handleApproveClick(tx._id, "deposit")}>Approve</Button></td>
                           </tr>
                         );
@@ -261,10 +253,11 @@ const AdminPanel = ({
                           <td>₹{user.balance.toFixed(2)}</td>
                           <td>{user.isAdmin ? "Yes" : "No"}</td>
                           <td>
-                            <Button size="sm" style={{ marginRight: "0.5rem" }} variant="warning" className="me-2" onClick={() => handleUserAction(user._id, "toggleAdmin")}>
+                            <Button size="sm" style={{ marginRight: "0.5rem" }} variant="warning" onClick={() => handleUserAction(user._id, "toggleAdmin")}>
                               {user.isAdmin ? "Revoke Admin" : "Make Admin"}
                             </Button>
-                            <Button size="sm" variant="danger" onClick={() => handleUserAction(user._id, "delete")}>Delete</Button>
+                            <Button size="sm" style={{ marginRight: "0.5rem" }} variant="danger" onClick={() => handleUserAction(user._id, "delete")}>Delete</Button>
+                            <Button size="sm" variant="info" onClick={() => handleUserAction(user._id, "resetPassword")}>Reset Password</Button> {/* ✅ Reset Password */}
                           </td>
                         </tr>
                       ))}
@@ -279,53 +272,23 @@ const AdminPanel = ({
               </Card>
             )}
 
-            {/* ✅ QR Code Update Tab */}
-            {/* ✅ QR Code Update Tab */}
-{activeTab === "qr" && (
-  <Card style={cardStyle} className="mb-4">
-    <Card.Body>
-      <Card.Title>Update QR Code</Card.Title>
-
-      {/* File Upload */}
-      <Form.Group>
-        <Form.Label>Select new QR Code</Form.Label>
-        <Form.Control 
-          type="file" 
-          accept="image/*" 
-          onChange={(e) => setQrFile(e.target.files[0])} 
-        />
-      </Form.Group>
-
-      <Button 
-        className="mt-2" 
-        variant="primary" 
-        onClick={() => {
-          if (!qrFile) return alert("Please select a QR code file");
-          updateQrCode(qrFile);
-          setQrFile(null);
-        }} 
-        disabled={!qrFile}
-      >
-        Upload
-      </Button>
-
-      {/* Display current QR code */}
-      <div className="mt-3">
-        <p>Current QR Code:</p>
-        {admin.qrCodeUrl ? (
-          <img 
-            src={`https://trade3-production-f69d.up.railway.app${admin.qrCodeUrl}`} 
-            alt="QR" 
-            style={{ width: "200px" }} 
-          />
-        ) : (
-          <p>No QR code uploaded yet.</p>
-        )}
-      </div>
-    </Card.Body>
-  </Card>
-)}
-
+            {/* QR Tab */}
+            {activeTab === "qr" && (
+              <Card style={cardStyle} className="mb-4">
+                <Card.Body>
+                  <Card.Title>Update QR Code</Card.Title>
+                  <Form.Group>
+                    <Form.Label>Select new QR Code</Form.Label>
+                    <Form.Control type="file" accept="image/*" onChange={handleQrChange} />
+                  </Form.Group>
+                  <Button className="mt-2" variant="primary" onClick={handleQrUpload} disabled={!qrFile}>Upload</Button>
+                  <div className="mt-3">
+                    <p>Current QR Code:</p>
+                    {admin.qrCodeUrl ? <img src={`https://trade3-production-f69d.up.railway.app${admin.qrCodeUrl}`} alt="QR" style={{ width: "200px" }} /> : <p>No QR code uploaded yet.</p>}
+                  </div>
+                </Card.Body>
+              </Card>
+            )}
 
           </Col>
         </Row>
@@ -349,7 +312,7 @@ const AdminPanel = ({
           <Modal.Title>Confirm Action</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ background: "#2c3e50", color: "#fff" }}>
-          Are you sure you want to {confirmUserModal.action === "delete" ? "delete this user" : "toggle admin status"}?
+          Are you sure you want to {confirmUserModal.action === "delete" ? "delete this user" : confirmUserModal.action === "resetPassword" ? "reset this user's password" : "toggle admin status"}?
         </Modal.Body>
         <Modal.Footer style={{ background: "#2c3e50" }}>
           <Button variant="secondary" onClick={closeModals}>Cancel</Button>
@@ -381,6 +344,7 @@ AdminPanel.propTypes = {
   toggleAdminStatus: PropTypes.func.isRequired,
   deleteUser: PropTypes.func.isRequired,
   updateQrCode: PropTypes.func.isRequired,
+  resetUserPassword: PropTypes.func.isRequired, // ✅ added
 };
 
 const mapStateToProps = (state) => ({
@@ -397,10 +361,5 @@ export default connect(mapStateToProps, {
   toggleAdminStatus,
   deleteUser,
   updateQrCode,
+  resetUserPassword, // ✅ added
 })(AdminPanel);
-
-
-
-
-
-
