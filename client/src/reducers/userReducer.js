@@ -10,8 +10,11 @@ export default function(state = initialState, action) {
     case REFRESH_USER_DATA:
       return {
         ...state,
-        user: action.payload
-        //balance: action.payload.balance
+        user: {
+          ...state.user,       // keep existing fields if any
+          ...action.payload    // overwrite with fresh data from backend
+        },
+        balance: action.payload.balance || state.balance
       };
 
     default:
