@@ -6,13 +6,22 @@ const cors = require("cors");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
 
-const { authorizeAdmin } = require("./middleware/authorizeAdmin"); // ✅ your existing middleware
+const { authorizeAdmin } = require("./middleware/authorizeAdmin");
 
 const app = express();
 
-// Middleware
+// ===== Middleware =====
 app.use(cors());
-app.use(express.json());
+
+// ✅ Only parse JSON / urlencoded requests
+// This prevents Express from interfering with `multipart/form-data` uploads
+app.use(
+  express.json({
+    limit: "5mb",
+    type: ["application/json", "application/*+json"],
+  })
+);
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 // ✅ Ensure required folders exist
 const requiredDirs = ["uploads", "static"];
@@ -26,7 +35,7 @@ requiredDirs.forEach((dir) => {
   }
 });
 
-// MongoDB Connection
+// ===== MongoDB Connection =====
 const db = process.env.mongoURI;
 mongoose
   .connect(db, {
@@ -39,7 +48,7 @@ mongoose
     process.exit(1);
   });
 
-// API Routes
+// ===== API Routes =====
 app.use("/api/user", require("./api/user"));
 app.use("/api/stocks", require("./api/stocks"));
 app.use("/api/authorize", require("./api/authorize"));
@@ -47,7 +56,7 @@ app.use("/api/iex", require("./api/iex"));
 app.use("/api/email", require("./api/email"));
 app.use("/api/transactions", require("./api/transactions"));
 
-// ✅ Middleware to protect file access via token query
+// ===== Middleware for protecting file access =====
 function authorizeAdminFile(req, res, next) {
   const token = req.query.token;
   if (!token) return res.status(401).json({ msg: "No token. Authorization denied." });
@@ -62,9 +71,10 @@ function authorizeAdminFile(req, res, next) {
   }
 }
 
+// Static files
 app.use("/static", express.static(path.join(__dirname, "static")));
 
-// ✅ Protected route for deposit screenshots (admins only)
+// Protected uploads
 app.get("/uploads/:filename", authorizeAdminFile, (req, res) => {
   const filePath = path.join(__dirname, "uploads", req.params.filename);
 
@@ -74,16 +84,15 @@ app.get("/uploads/:filename", authorizeAdminFile, (req, res) => {
   });
 });
 
-// Serve React frontend in production
+// ===== Serve React frontend in production =====
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "client", "build")));
 
-  // Handle SPA routing
   app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
   });
 }
 
-// Start server
+// ===== Start server =====
 const PORT = process.env.PORT || 5051;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
