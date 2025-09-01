@@ -10,18 +10,10 @@ const { authorizeAdmin } = require("./middleware/authorizeAdmin");
 
 const app = express();
 
-// ===== Middleware =====
+// ✅ Increase payload limits for file uploads
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cors());
-
-// ✅ Only parse JSON / urlencoded requests
-// This prevents Express from interfering with `multipart/form-data` uploads
-app.use(
-  express.json({
-    limit: "5mb",
-    type: ["application/json", "application/*+json"],
-  })
-);
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 // ✅ Ensure required folders exist
 const requiredDirs = ["uploads", "static"];
@@ -35,20 +27,16 @@ requiredDirs.forEach((dir) => {
   }
 });
 
-// ===== MongoDB Connection =====
-const db = process.env.mongoURI;
+// MongoDB connection
 mongoose
-  .connect(db, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err.message);
     process.exit(1);
   });
 
-// ===== API Routes =====
+// API routes
 app.use("/api/user", require("./api/user"));
 app.use("/api/stocks", require("./api/stocks"));
 app.use("/api/authorize", require("./api/authorize"));
@@ -56,7 +44,10 @@ app.use("/api/iex", require("./api/iex"));
 app.use("/api/email", require("./api/email"));
 app.use("/api/transactions", require("./api/transactions"));
 
-// ===== Middleware for protecting file access =====
+// ✅ Serve static files
+app.use("/static", express.static(path.join(__dirname, "static")));
+
+// ✅ Admin-only file access (uploads)
 function authorizeAdminFile(req, res, next) {
   const token = req.query.token;
   if (!token) return res.status(401).json({ msg: "No token. Authorization denied." });
@@ -71,28 +62,22 @@ function authorizeAdminFile(req, res, next) {
   }
 }
 
-// Static files
-app.use("/static", express.static(path.join(__dirname, "static")));
-
-// Protected uploads
 app.get("/uploads/:filename", authorizeAdminFile, (req, res) => {
   const filePath = path.join(__dirname, "uploads", req.params.filename);
-
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (err) return res.status(404).json({ msg: "File not found" });
     res.sendFile(filePath);
   });
 });
 
-// ===== Serve React frontend in production =====
+// Serve React frontend in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "client", "build")));
-
   app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
   });
 }
 
-// ===== Start server =====
+// Start server
 const PORT = process.env.PORT || 5051;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
