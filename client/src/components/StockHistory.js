@@ -119,7 +119,7 @@ class StockHistory extends Component {
                 </Row>
                 <Row className="mt-3 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Name:</strong> {user.name}</p></Row>
                 <Row className="mt-2 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Email:</strong> {user.email}</p></Row>
-                <Row className="mt-2 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Account ID:</strong> {user._id || "Not available"}</p></Row>
+                <Row className="mt-2 justify-content-center"><p style={{ color: "rgb(33, 206, 153)" }}><strong>Account ID:</strong> {user._id && user._id}</p></Row>
                 <Row className="mt-2 justify-content-center">
                   <p style={{ color: "rgb(33, 206, 153)" }}>
                     <strong>Current Balance:</strong>{" "}
@@ -307,3 +307,4 @@ const mapStateToProps = (state) => ({
 });
 
 export default connect(mapStateToProps, { refreshUserData })(StockHistory);
+
