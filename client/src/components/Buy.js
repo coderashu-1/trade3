@@ -1073,7 +1073,7 @@ const LiveTradingWithChartMarkers = ({ auth, refreshUserData, buyStock }) => {
         <div>Dir: <b>{h.direction?.toUpperCase()}</b> • Amount: <b>{fmtINR(h.amount)}</b></div>
         <div>Entry: {fmtNum(h.entryPrice)} → Exit: {isFinite(h.resultPrice) ? fmtNum(h.resultPrice) : '-'}</div>
         <div>Δ Price: {fmtNum(priceMove)} ({fmtNum(priceMovePct, 2)}%)</div>
-        <div>Result: <b>{h.result}</b> • P/L: <b style={{ color: pnlColor }}>{fmtINR(h.pnl)}</b></div>
+        <div>Result: <b>{h.result}</b></div>
       </div>
     );
   };
@@ -1260,3 +1260,4 @@ LiveTradingWithChartMarkers.propTypes = { auth: PropTypes.object.isRequired, ref
 
 const mapStateToProps = (state) => ({ auth: state.auth, user: state.user });
 export default connect(mapStateToProps, { refreshUserData, buyStock })(LiveTradingWithChartMarkers);
+
