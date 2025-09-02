@@ -758,6 +758,14 @@ const startBet = useCallback(async (direction) => {
   strikePrice
 ]);
 
+  // Cancel pending strike (user-driven)
+  const cancelPending = useCallback(() => {
+    clearStrikeSubscription();
+    hasTriggeredRef.current = false;
+    setWaitingForStrike(false);
+    strikeDirectionRef.current = null;
+  }, [clearStrikeSubscription]);
+
   // cleanup on unmount: clear timers & strike subscription, persist markers
   useEffect(() => {
     return () => {
@@ -1113,4 +1121,3 @@ LiveTradingWithChartMarkers.propTypes = {
 
 const mapStateToProps = (state) => ({ auth: state.auth, user: state.user });
 export default connect(mapStateToProps, { refreshUserData, buyStock })(LiveTradingWithChartMarkers);
-
