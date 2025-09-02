@@ -28,7 +28,7 @@ const AVAILABLE_PAIRS = [
 ];
 
 const BINANCE_WS_URL = 'wss://stream.binance.com:9443/ws/!ticker@arr';
-const PAYOUT_PCT = 0.3; // 80% payout on win (Binomo-like)
+const PAYOUT_PCT = 0.6; // 80% payout on win (Binomo-like)
 const MIN_BET = 50; // ₹50 minimum
 const DEFAULT_DURATION = 180; // 3 minutes in seconds (kept)
 const MAX_ACTIVE_BETS = 3; // <-- NEW: at most 3 live bets at once
@@ -1121,4 +1121,5 @@ LiveTradingWithChartMarkers.propTypes = {
 
 const mapStateToProps = (state) => ({ auth: state.auth, user: state.user });
 export default connect(mapStateToProps, { refreshUserData, buyStock })(LiveTradingWithChartMarkers);
+
 
