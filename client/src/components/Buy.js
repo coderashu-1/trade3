@@ -689,84 +689,74 @@ const LiveTradingWithChartMarkers = ({ auth, refreshUserData, buyStock }) => {
   }, [selectedValue, strikePrice]);
 
   // startBet: immediate or strike-based start
-  const startBet = useCallback(async (direction) => {
-    if (activeBets.length >= MAX_ACTIVE_BETS) return alert(`Max ${MAX_ACTIVE_BETS} active bets reached`);
-    const balance = Number(auth.user?.balance || 0);
-    if (!betAmount || betAmount <= 0) return alert('Amount must be > 0');
-    if (betAmount < MIN_BET) return alert(`Minimum trade is ₹${MIN_BET}`);
-    const totalLocked = activeBets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-    if (betAmount > (balance - totalLocked)) return alert('Insufficient available balance (consider active locked bets)');
+const startBet = useCallback(async (direction) => {
+  if (activeBets.length >= MAX_ACTIVE_BETS) return alert(`Max ${MAX_ACTIVE_BETS} active bets reached`);
+  const balance = Number(auth.user?.balance || 0);
+  if (!betAmount || betAmount <= 0) return alert('Amount must be > 0');
+  if (betAmount < MIN_BET) return alert(`Minimum trade is ₹${MIN_BET}`);
+  const totalLocked = activeBets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+  if (betAmount > (balance - totalLocked)) return alert('Insufficient available balance (consider active locked bets)');
 
-    const strike = strikePrice ? parseFloat(strikePrice) : null;
-    const commonBetFields = {
-      id: uuid(),
-      direction,
-      amount: betAmount,
-      duration: betDuration || DEFAULT_DURATION,
-      strike: isFinite(strike) ? strike : null,
-      stopLossEnabled,
-      stopLossAmount,
-      pair: selectedValue
-    };
+  // Fix: Trim and validate strike price input properly
+  const trimmedStrike = strikePrice.trim();
+  const strike = (trimmedStrike === '' || isNaN(Number(trimmedStrike))) ? null : Number(trimmedStrike);
 
-    if (isFinite(strike)) {
-      // Strike-based pending trigger (one at a time)
-      clearStrikeSubscription();
-      hasTriggeredRef.current = false;
-      setWaitingForStrike(true);
-      strikeDirectionRef.current = direction;
-
-      const key = selectedValue;
-      const unsub = priceFeed.subscribe(key, ({ price }) => {
-        if (!isFinite(price)) return;
-        if (hasTriggeredRef.current) return;
-
-        const crossed =
-          (direction === 'up' && price >= strike) ||
-          (direction === 'down' && price <= strike);
-
-        if (crossed) {
-          hasTriggeredRef.current = true;
-          try { unsub(); } catch (e) {}
-          strikeUnsubRef.current = null;
-          setWaitingForStrike(false);
-          strikeDirectionRef.current = null;
-
-          const bet = { ...commonBetFields, entryPrice: price };
-          beginBet(bet);
-        }
-      });
-
-      strikeUnsubRef.current = unsub;
-      return;
-    }
-
-    // immediate start (no strike)
-    const current = livePriceRef.current ?? livePrice;
-    if (!isFinite(current)) return alert('Current price unavailable');
-    const bet = { ...commonBetFields, entryPrice: current };
-    beginBet(bet);
-  }, [
-    activeBets.length,
-    auth.user,
-    betAmount,
-    betDuration,
-    beginBet,
-    clearStrikeSubscription,
-    livePrice,
-    selectedValue,
-    stopLossAmount,
+  const commonBetFields = {
+    id: uuid(),
+    direction,
+    amount: betAmount,
+    duration: betDuration || DEFAULT_DURATION,
+    strike: strike !== null && isFinite(strike) ? strike : null,
     stopLossEnabled,
-    strikePrice
-  ]);
+    stopLossAmount,
+    pair: selectedValue
+  };
 
-  // Cancel pending strike (user-driven)
-  const cancelPending = useCallback(() => {
+  if (strike !== null && isFinite(strike)) {
+    // Strike-based pending trigger (one at a time)
     clearStrikeSubscription();
     hasTriggeredRef.current = false;
-    setWaitingForStrike(false);
-    strikeDirectionRef.current = null;
-  }, [clearStrikeSubscription]);
+    setWaitingForStrike(true);
+    strikeDirectionRef.current = direction;
+    const key = selectedValue;
+    const unsub = priceFeed.subscribe(key, ({ price }) => {
+      if (!isFinite(price)) return;
+      if (hasTriggeredRef.current) return;
+      const crossed =
+        (direction === 'up' && price >= strike) ||
+        (direction === 'down' && price <= strike);
+      if (crossed) {
+        hasTriggeredRef.current = true;
+        try { unsub(); } catch (e) {}
+        strikeUnsubRef.current = null;
+        setWaitingForStrike(false);
+        strikeDirectionRef.current = null;
+        const bet = { ...commonBetFields, entryPrice: price };
+        beginBet(bet);
+      }
+    });
+    strikeUnsubRef.current = unsub;
+    return;
+  }
+
+  // immediate start (no strike)
+  const current = livePriceRef.current ?? livePrice;
+  if (!isFinite(current)) return alert('Current price unavailable');
+  const bet = { ...commonBetFields, entryPrice: current };
+  beginBet(bet);
+}, [
+  activeBets.length,
+  auth.user,
+  betAmount,
+  betDuration,
+  beginBet,
+  clearStrikeSubscription,
+  livePrice,
+  selectedValue,
+  stopLossAmount,
+  stopLossEnabled,
+  strikePrice
+]);
 
   // cleanup on unmount: clear timers & strike subscription, persist markers
   useEffect(() => {
@@ -1123,3 +1113,4 @@ LiveTradingWithChartMarkers.propTypes = {
 
 const mapStateToProps = (state) => ({ auth: state.auth, user: state.user });
 export default connect(mapStateToProps, { refreshUserData, buyStock })(LiveTradingWithChartMarkers);
+
