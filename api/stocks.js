@@ -43,7 +43,7 @@ router.post("/buy", authorize, async (req, res) => {
     let outcomeLog = `Placed bet on ${ticker} at ₹${price} for ₹${betCost} on ${moment().format("L")}.`;
 
     // 🟢 Apply 30% profit rule
-    const PAYOUT_PCT = 0.3; // 30% profit
+    const PAYOUT_PCT = 0.6; // 30% profit
 
     if (data && data.outcome === "won") {
       const profit = betCost * PAYOUT_PCT;
@@ -110,3 +110,4 @@ router.post("/delete", authorize, async (req, res) => {
 });
 
 module.exports = router;
+
