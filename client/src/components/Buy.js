@@ -46,9 +46,9 @@ const BET_DURATIONS = [
   { label: '30 min', value: 30 * 60 },
   { label: '1 hr', value: 60 * 60 },
   { label: '2 hr', value: 2 * 60 * 60 },
-  { label: '3 hr', value: 3 * 60 * 60 },
-  { label: '4 hr', value: 4 * 60 * 60 },
-  { label: '5 hr', value: 5 * 60 * 60 },
+  // { label: '3 hr', value: 3 * 60 * 60 },
+  // { label: '4 hr', value: 4 * 60 * 60 },
+  // { label: '5 hr', value: 5 * 60 * 60 },
 ];
 
 const nowSec = () => Math.floor(Date.now() / 1000);
@@ -1121,3 +1121,4 @@ LiveTradingWithChartMarkers.propTypes = {
 
 const mapStateToProps = (state) => ({ auth: state.auth, user: state.user });
 export default connect(mapStateToProps, { refreshUserData, buyStock })(LiveTradingWithChartMarkers);
+
