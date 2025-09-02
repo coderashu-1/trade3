@@ -36,28 +36,31 @@ router.post("/buy", authorize, async (req, res) => {
       return res.status(400).json({ msg: "Insufficient funds" });
     }
 
-    // ⛔ Step 1: Deduct balance for placing the bet
+    // Step 1: Deduct balance for placing the bet
     currentBalance -= betCost;
 
-    // ✅ Step 2: Prepare outcome log in ₹
+    // Step 2: Prepare outcome log in ₹
     let outcomeLog = `Placed bet on ${ticker} at ₹${price} for ₹${betCost} on ${moment().format("L")}.`;
 
+    // 🟢 Apply 30% profit rule
+    const PAYOUT_PCT = 0.3; // 30% profit
+
     if (data && data.outcome === "won") {
-      const payout = betCost * 2;
-      currentBalance += payout;
-      outcomeLog += ` ✅ WON: Credited ₹${payout}.`;
+      const profit = betCost * PAYOUT_PCT;
+      currentBalance += betCost + profit; // add back stake + profit
+      outcomeLog += ` ✅ WON: Credited ₹${betCost + profit} (₹${profit} profit).`;
     } else if (data && data.outcome === "lost") {
       outcomeLog += ` ❌ LOST: Bet amount lost.`;
     } else if (data && data.outcome === "stopped") {
       outcomeLog += ` ⚠️ STOPPED (Loss): Bet stopped via stop loss.`;
     }
 
-    // ✅ Step 3: Update user balance and history
+    // Step 3: Update user balance and history
     user.balance = currentBalance;
     user.history.push(outcomeLog);
     await user.save();
 
-    // ✅ Step 4: Save bet / stock details
+    // Step 4: Save bet / stock details
     const stock = new Stock({
       stock: req.body.stock || "",
       ticker,
@@ -70,7 +73,7 @@ router.post("/buy", authorize, async (req, res) => {
 
     const saved = await stock.save();
 
-    // ✅ Step 5: Return updated balance and saved bet
+    // Step 5: Return updated balance and saved bet
     res.json({
       stock: saved,
       newBalance: user.balance
