@@ -511,44 +511,40 @@ const LiveTradingWithChartMarkers = ({ auth, refreshUserData, buyStock }) => {
     map.clear();
   }, []);
 
-  // finalizeBet: exit marker, save, refresh, & remove from activeBets
-const finalizeBet = useCallback(async (outcome, exitPrice, bet) => {
-  // GUARD: only finalize if still present
-  if (!activeBets.find(b => b.id === bet.id)) return;
-
-  try { addExitMarker(bet, exitPrice); } catch (e) { console.error(e); }
-  const pnl = computePnL(bet, exitPrice, outcome);
-  const payload = {
-    value: bet.amount,
-    price: bet.entryPrice,
-    quantity: 1,
-    ticker: selectedValue,
-    data: { resultPrice: exitPrice, direction: bet.direction, outcome, pnl }
-  };
-
-  try {
-    await buyStock(payload);
-    const rec = {
-      time: new Date().toLocaleString(),
-      direction: bet.direction,
-      result: outcome === 'stopped' ? 'Stopped (Loss)' : outcome,
-      entryPrice: bet.entryPrice,
-      resultPrice: exitPrice,
-      amount: bet.amount,
-      pair: selectedValue,
-      pnl
+ // finalizeBet: exit marker, save, refresh, & remove from activeBets
+  const finalizeBet = useCallback(async (outcome, exitPrice, bet) => {
+    try { addExitMarker(bet, exitPrice); } catch (e) { console.error(e); }
+    const pnl = computePnL(bet, exitPrice, outcome);
+    const payload = {
+      value: bet.amount,
+      price: bet.entryPrice,
+      quantity: 1,
+      ticker: selectedValue,
+      data: { resultPrice: exitPrice, direction: bet.direction, outcome, pnl }
     };
-    setBetHistory((p) => [rec, ...p]);
-    console.log('Bet saved', rec);
-  } catch (err) {
-    console.error('Error saving bet', err);
-  } finally {
-    setActiveBets((prev) => prev.filter((b) => b.id !== bet.id));
-    clearTimerFor(bet.id);
-    try { await refreshUserData(); } catch (e) {}
-  }
-}, [activeBets, addExitMarker, buyStock, refreshUserData, selectedValue, clearTimerFor]);
-
+    try {
+      await buyStock(payload);
+      const rec = {
+        time: new Date().toLocaleString(),
+        direction: bet.direction,
+        result: outcome === 'stopped' ? 'Stopped (Loss)' : outcome,
+        entryPrice: bet.entryPrice,
+        resultPrice: exitPrice,
+        amount: bet.amount,
+        pair: selectedValue,
+        pnl
+      };
+      setBetHistory((p) => [rec, ...p]);
+      console.log('Bet saved', rec);
+    } catch (err) {
+      console.error('Error saving bet', err);
+    } finally {
+      setActiveBets((prev) => prev.filter((b) => b.id !== bet.id));
+      clearTimerFor(bet.id);
+      try { await refreshUserData(); } catch (e) {}
+    }
+  }, [addExitMarker, buyStock, refreshUserData, selectedValue, clearTimerFor]);
+  
   // Timer tick logic for a specific bet
   const startTimerForBet = useCallback((bet) => {
     // defensive: clear if exists
@@ -1123,6 +1119,7 @@ LiveTradingWithChartMarkers.propTypes = {
 
 const mapStateToProps = (state) => ({ auth: state.auth, user: state.user });
 export default connect(mapStateToProps, { refreshUserData, buyStock })(LiveTradingWithChartMarkers);
+
 
 
 
