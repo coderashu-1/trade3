@@ -350,7 +350,7 @@ const AdminPanel = ({
                   <Button className="mt-2" variant="primary" onClick={handleQrUpload} disabled={!qrFile}>Upload</Button>
                   <div className="mt-3">
                     <p>Current QR Code:</p>
-                    {admin.qrCodeUrl ? <img src={`https://trade3-production-f69d.up.railway.app${admin.qrCodeUrl}`} alt="QR" style={{ width: "200px" }} /> : <p>No QR code uploaded yet.</p>}
+                    {admin.qrCodeUrl ? <img src={`https://trade3-production-398f.up.railway.app${admin.qrCodeUrl}`} alt="QR" style={{ width: "200px" }} /> : <p>No QR code uploaded yet.</p>}
                   </div>
                 </Card.Body>
               </Card>
@@ -448,4 +448,5 @@ export default connect(mapStateToProps, {
   updateQrCode,
   resetUserPassword, // ✅ new
 })(AdminPanel);
+
 
