@@ -38,7 +38,7 @@ const STORAGE_KEY_SELECTED = 'liveTrade_selectedPair_v1';
 
 // Button presets
 const BET_DURATIONS = [
-  { label: '5sec', value: 5 },
+  // { label: '5sec', value: 5 },
   { label: '1 min', value: 60 },
   { label: '3 min', value: 3 * 60 }, // quick access for 3-minute default
   { label: '5 min', value: 5 * 60 },
@@ -1136,6 +1136,7 @@ LiveTradingWithChartMarkers.propTypes = {
 
 const mapStateToProps = (state) => ({ auth: state.auth, user: state.user });
 export default connect(mapStateToProps, { refreshUserData, buyStock })(LiveTradingWithChartMarkers);
+
 
 
 
