@@ -10,7 +10,8 @@ export const FETCH_ALL_USERS = "FETCH_ALL_USERS";
 export const TOGGLE_ADMIN_STATUS = "TOGGLE_ADMIN_STATUS";
 export const DELETE_USER = "DELETE_USER";
 export const UPDATE_QR_CODE = "UPDATE_QR_CODE"; 
-export const RESET_USER_PASSWORD = "RESET_USER_PASSWORD"; // ✅ new
+export const RESET_USER_PASSWORD = "RESET_USER_PASSWORD";
+export const DELETE_TRANSACTION = "DELETE_TRANSACTION"; // ✅ new
 
 // ----- Transactions -----
 export const fetchPendingDeposits = () => async (dispatch, getState) => {
@@ -52,6 +53,18 @@ export const approveWithdraw = (transactionId) => async (dispatch, getState) => 
       headers: { "auth-token": getState().auth.token }
     });
     dispatch({ type: APPROVE_WITHDRAW, payload: transactionId });
+  } catch (err) {
+    dispatch(returnErrors(err.response?.data, err.response?.status));
+  }
+};
+
+// ✅ Delete transaction (Deposit / Withdraw)
+export const deleteTransaction = (transactionId) => async (dispatch, getState) => {
+  try {
+    await axios.delete(`/api/transactions/admin/transaction/${transactionId}`, {
+      headers: { "auth-token": getState().auth.token }
+    });
+    dispatch({ type: DELETE_TRANSACTION, payload: transactionId });
   } catch (err) {
     dispatch(returnErrors(err.response?.data, err.response?.status));
   }
