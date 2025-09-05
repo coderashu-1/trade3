@@ -276,7 +276,7 @@ class StockHistory extends Component {
 
                   <p>
                     <strong>WhatsApp Support:</strong><br />
-                    <a href="https://wa.me/1234567890" target="_blank" rel="noreferrer">
+                    <a href="https://wa.me/7828107641" target="_blank" rel="noreferrer">
                       <img 
                         src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" 
                         alt="WhatsApp" 
@@ -287,16 +287,10 @@ class StockHistory extends Component {
 
                   <p>
                     <strong>Email:</strong><br />
-                    <a href="mailto:support@example.com" style={{ color: "#21ce99" }}>
-                      support@example.com
+                    <a href="hrtradego.live04@gmail.com" style={{ color: "#21ce99" }}>
+                     hrtradego.live04@gmail.com
                     </a>
                   </p>
-
-                  <p>
-                    <strong>Phone:</strong><br />
-                    +1 234 567 890
-                  </p>
-
                   <p>
                     <strong>Other Help Info:</strong><br />
                     You can message us anytime for account support, transaction help, or general queries. Our support team is happy to assist you promptly.
@@ -318,6 +312,7 @@ const mapStateToProps = (state) => ({
 });
 
 export default connect(mapStateToProps, { refreshUserData })(StockHistory);
+
 
 
 
