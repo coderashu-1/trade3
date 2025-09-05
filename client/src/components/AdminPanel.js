@@ -291,6 +291,7 @@ const AdminPanel = ({
                               <Button
                                 size="sm"
                                 variant="success"
+                                style={{ marginRight: "0.5rem" }}
                                 onClick={() => handleApproveClick(tx._id, "deposit")}
                                 className="me-2"
                               >
@@ -352,6 +353,7 @@ const AdminPanel = ({
                             <Button
                               size="sm"
                               variant="success"
+                              style={{ marginRight: "0.5rem" }}
                               onClick={() => handleApproveClick(tx._id, "withdraw")}
                               className="me-2"
                             >
@@ -394,6 +396,7 @@ const AdminPanel = ({
                       <tr>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Phone</th>
                         <th>Balance</th>
                         <th>Admin</th>
                         <th>Actions</th>
@@ -404,6 +407,7 @@ const AdminPanel = ({
                         <tr key={user._id}>
                           <td>{user.name}</td>
                           <td>{user.email}</td>
+                          <td>{user.phone}</td>
                           <td>₹{user.balance.toFixed(2)}</td>
                           <td>{user.isAdmin ? "Yes" : "No"}</td>
                           <td>
@@ -607,3 +611,4 @@ export default connect(mapStateToProps, {
   resetUserPassword,
   deleteTransaction,
 })(AdminPanel);
+
