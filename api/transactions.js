@@ -270,5 +270,28 @@ router.post("/admin/reset-password/:userId", authorize, authorizeAdmin, async (r
   }
 });
 
+// ----- Delete Transaction (also delete screenshot if exists) -----
+router.delete("/admin/transaction/:id", authorize, authorizeAdmin, async (req, res) => {
+  try {
+    const transaction = await Transaction.findById(req.params.id);
+    if (!transaction) return res.status(404).json({ error: "Transaction not found" });
+
+    if (transaction.screenshot) {
+      const filePath = path.join(__dirname, "..", "uploads", transaction.screenshot);
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting screenshot:", err);
+      });
+    }
+
+    await transaction.remove();
+    res.json({ message: "Transaction deleted and screenshot removed" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 module.exports = router;
+
 
