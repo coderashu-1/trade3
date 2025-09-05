@@ -423,6 +423,7 @@ const AdminPanel = ({
                             <Button
                               size="sm"
                               variant="danger"
+                              style={{ marginRight: "0.5rem" }}
                               className="me-2"
                               onClick={() => handleUserAction(user._id, "delete")}
                             >
@@ -611,4 +612,5 @@ export default connect(mapStateToProps, {
   resetUserPassword,
   deleteTransaction,
 })(AdminPanel);
+
 
