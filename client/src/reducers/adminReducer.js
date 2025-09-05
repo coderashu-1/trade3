@@ -7,7 +7,8 @@ import {
   TOGGLE_ADMIN_STATUS,
   DELETE_USER,
   UPDATE_QR_CODE,
-  RESET_USER_PASSWORD, // ✅ new
+  RESET_USER_PASSWORD,
+  DELETE_TRANSACTION, // ✅ new
 } from "../actions/adminActions";
 
 const initialState = {
@@ -35,6 +36,14 @@ export default function adminReducer(state = initialState, action) {
     case APPROVE_WITHDRAW:
       return {
         ...state,
+        withdraws: state.withdraws.filter((tx) => tx._id !== action.payload),
+      };
+
+    // ✅ Handle delete deposit or withdraw
+    case DELETE_TRANSACTION:
+      return {
+        ...state,
+        deposits: state.deposits.filter((tx) => tx._id !== action.payload),
         withdraws: state.withdraws.filter((tx) => tx._id !== action.payload),
       };
 
