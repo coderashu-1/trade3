@@ -196,7 +196,7 @@ router.delete("/admin/transaction/:id", authorize, authorizeAdmin, async (req, r
 // ----- Admin: User Management -----
 router.get("/admin/users", authorize, authorizeAdmin, async (req, res) => {
   try {
-    const users = await User.find().select("name email balance cash date history isAdmin");
+    const users = await User.find().select("name email phone balance cash date history isAdmin");
     res.json(users);
   } catch (err) {
     console.error(err);
@@ -293,5 +293,6 @@ router.delete("/admin/transaction/:id", authorize, authorizeAdmin, async (req, r
 
 
 module.exports = router;
+
 
 
