@@ -5,15 +5,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { login } from "../actions/authActions";
 import { clearErrors } from "../actions/errorActions";
-import {
-  Button,
-  Nav,
-  Row,
-  Col,
-  Navbar,
-  Image,
-  Modal
-} from "react-bootstrap";
+import { Button, Nav, Row, Col, Navbar, Image, Modal } from "react-bootstrap";
 import { Redirect, Link } from "react-router-dom";
 
 class Splash extends Component {
@@ -23,8 +15,8 @@ class Splash extends Component {
     password: "",
     msg: null,
     alertOpen: false,
-    showPolicy: true,       // 👈 default: show modal
-    policyAccepted: false   // 👈 track acceptance
+    showPolicy: true,
+    policyAccepted: false
   };
 
   static propTypes = {
@@ -35,7 +27,6 @@ class Splash extends Component {
   };
 
   componentDidMount() {
-    // 👇 If already accepted once, don’t show again
     const accepted = localStorage.getItem("policyAccepted");
     if (accepted === "true") {
       this.setState({ showPolicy: false, policyAccepted: true });
@@ -67,6 +58,61 @@ class Splash extends Component {
     this.setState({ [e.target.name]: e.target.value });
   };
 
+  // --------- Add Shortcut Logic ---------
+  isMobile = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  downloadDesktopShortcut = () => {
+    const url = window.location.href;
+    const content = `[InternetShortcut]
+URL=${url}
+IconFile=${url}/favicon.ico
+IconIndex=0
+`;
+    const blob = new Blob([content], { type: "application/octet-stream" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "TradeGo.url";
+    a.click();
+  };
+
+  downloadMacShortcut = () => {
+    const url = window.location.href;
+    const content = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>URL</key>
+  <string>${url}</string>
+</dict>
+</plist>`;
+    const blob = new Blob([content], { type: "application/octet-stream" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "TradeGo.webloc";
+    a.click();
+  };
+
+  showMobileInstructions = () => {
+    alert(
+      "To add this site to your home screen:\n\n" +
+        "Android: Tap the browser menu → Add to Home Screen\n" +
+        "iOS: Tap Share → Add to Home Screen"
+    );
+  };
+
+  handleAddShortcut = () => {
+    if (this.isMobile()) {
+      this.showMobileInstructions();
+    } else {
+      if (navigator.platform.indexOf("Mac") > -1) {
+        this.downloadMacShortcut();
+      } else {
+        this.downloadDesktopShortcut();
+      }
+    }
+  };
+  // -------------------------------------
+
   render() {
     if (this.props.isAuthenticated === true) {
       return <Redirect push to="/" />;
@@ -87,11 +133,13 @@ class Splash extends Component {
           <Modal.Body>
             <p>
               Welcome to <strong>TradeGo.Live</strong>. By using our platform,
-              you agree to our Privacy Policy and Terms of Service. 
+              you agree to our Privacy Policy and Terms of Service.
             </p>
             <p>
-                Please trade responsibly. This is a high-risk platform. Your data is protected and will not be shared with third parties without consent.
-             </p>
+              Please trade responsibly. This is a high-risk platform. Your data
+              is protected and will not be shared with third parties without
+              consent.
+            </p>
             <p style={{ fontSize: "0.85rem", color: "gray" }}>
               Click "Accept" to continue.
             </p>
@@ -164,6 +212,17 @@ class Splash extends Component {
                       </Button>
                     </Link>
                   </Row>
+
+                  {/* Add Shortcut Button */}
+                  <Row className="mt-3 justify-content-center">
+                    <Button
+                      variant="primary"
+                      onClick={this.handleAddShortcut}
+                      style={{ width: "180px" }}
+                    >
+                      Add Shortcut
+                    </Button>
+                  </Row>
                 </div>
               </Col>
 
@@ -208,5 +267,3 @@ const mapStateToProps = state => ({
 });
 
 export default connect(mapStateToProps, { login, clearErrors })(Splash);
-
-
