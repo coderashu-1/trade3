@@ -51,6 +51,7 @@ router.post("/", (req, res) => {
               id: user.id,
               name: user.name,
               email: user.email,
+              phone: user.phone,
               balance: user.balance,
               history: user.history,
               date: user.date,
@@ -80,3 +81,4 @@ router.get("/user", authorize, (req, res) => {
 });
 
 module.exports = router;
+
