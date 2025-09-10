@@ -43,6 +43,7 @@ router.post("/", (req, res) => {
                   id: user._id,
                   name: user.name,
                   email: user.email,
+                  phone: user.phone,   // ✅ include phone
                   balance: user.balance || 0,
                   transactions, // send transactions
                   date: user.date
@@ -88,4 +89,5 @@ router.delete("/:id", (req, res) => {
 });
 
 module.exports = router;
+
 
