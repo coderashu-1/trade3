@@ -37,14 +37,15 @@ export const loadUser = () => (dispatch, getState) => {
 };
 
 // ✅ Register user
-export const register = ({ name, email, password,phone }) => dispatch => {
+export const register = ({ name, email, password, phone }) => dispatch => {
   dispatch({ type: USER_LOADING });
 
   const config = {
     headers: { "Content-type": "application/json" }
   };
 
-  const body = JSON.stringify({ name, email, password });
+  // Include phone here!
+  const body = JSON.stringify({ name, email, password, phone });
 
   axios
     .post("/api/user", body, config)
@@ -61,6 +62,7 @@ export const register = ({ name, email, password,phone }) => dispatch => {
       dispatch({ type: REGISTER_FAIL });
     });
 };
+
 
 // ✅ Login user
 export const login = ({ email, password }) => dispatch => {
@@ -107,4 +109,5 @@ export const tokenConfig = getState => {
 
   return config;
 };
+
 
