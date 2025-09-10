@@ -37,7 +37,7 @@ export const loadUser = () => (dispatch, getState) => {
 };
 
 // ✅ Register user
-export const register = ({ name, email, password }) => dispatch => {
+export const register = ({ name, email, password,phone }) => dispatch => {
   dispatch({ type: USER_LOADING });
 
   const config = {
@@ -107,3 +107,4 @@ export const tokenConfig = getState => {
 
   return config;
 };
+
