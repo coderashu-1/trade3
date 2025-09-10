@@ -122,7 +122,7 @@ class AddMoney extends Component {
               <Form.Label>Enter Amount (INR)</Form.Label>
               <Form.Control
                 type="number"
-                placeholder="e.g. 100"
+                placeholder="e.g. 500"
                 value={amount}
                 onChange={(e) => this.setState({ amount: e.target.value })}
                 required
@@ -187,6 +187,7 @@ const mapStateToProps = (state) => ({
 });
 
 export default connect(mapStateToProps, { createDepositRequest, refreshUserData })(AddMoney);
+
 
 
 
